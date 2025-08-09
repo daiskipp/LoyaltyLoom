@@ -97,38 +97,12 @@ export default function Home() {
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: ["/api/activity"],
     enabled: !!user,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "未認証",
-          description: "ログアウトされました。再度ログインします...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   // Fetch announcements data
   const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ["/api/announcements"],
     enabled: !!user,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "未認証",
-          description: "ログアウトされました。再度ログインします...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   // Check-in mutation
@@ -362,11 +336,11 @@ export default function Home() {
             <div className="mb-6">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-2xl font-bold text-gray-700">
-                  {userData.nickname ? userData.nickname.charAt(0).toUpperCase() : 'G'}
+                  {userData.firstName ? userData.firstName.charAt(0).toUpperCase() : 'G'}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{userData.nickname || 'ゲスト'}</h3>
-                  <p className="text-sm text-gray-600">{userData.userId ? `@${userData.userId}` : 'ID未設定'}</p>
+                  <h3 className="text-lg font-bold text-gray-900">{userData.firstName || 'ゲスト'}</h3>
+                  <p className="text-sm text-gray-600">{userData.email || 'ゲストユーザー'}</p>
                 </div>
               </div>
             </div>
@@ -665,7 +639,7 @@ export default function Home() {
       {showSuccessToast && lastCheckin && (
         <SuccessToast 
           storeName={lastCheckin.storeName}
-          points={lastCheckin.points}
+          rewards={lastCheckin.rewards}
         />
       )}
     </div>

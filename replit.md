@@ -76,7 +76,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### 2025-08-09: Simplified Color Scheme Implementation
+### 2025-08-09: Store Announcements System Implementation
+- ✅ Created announcements database table with comprehensive schema
+- ✅ Added announcement storage operations (CRUD) to backend
+- ✅ Implemented API endpoints for announcements (/api/announcements)
+- ✅ Added announcements display to home page with type-based styling
+- ✅ Created 4 sample announcements with different types (promotion, info, event, urgent)
+- ✅ Color-coded announcement cards with left border styling
+- ✅ TypeScript interfaces and error handling for announcements
+- ✅ Fixed all TypeScript errors for user data display
+
+### Previous: Simplified Color Scheme Implementation
 - ✅ Redesigned membership card with premium styling and user info display
 - ✅ Updated entire app to use neutral gray color palette
 - ✅ Replaced bright gradients with clean white/gray design
@@ -84,13 +94,3 @@ Preferred communication style: Simple, everyday language.
 - ✅ Updated all buttons, cards, and UI elements to neutral theme
 - ✅ Maintained senior-friendly design with large fonts and touch targets
 - ✅ Added subtle shadows and borders for visual depth
-
-### Previous: Address Book Feature Complete
-- ✅ Added address book functionality for coin transfers
-- ✅ Automatic saving of transfer recipients with user-friendly nicknames
-- ✅ Favorite contacts system with heart icon toggle
-- ✅ Quick send feature showing favorite contacts on send page
-- ✅ Full CRUD operations for address book management
-- ✅ Database migrations generated for address_book table
-- ✅ Comprehensive README.md documentation created
-- ✅ Tab-based navigation: Send | Address Book | History
