@@ -1,4 +1,4 @@
-import { Home, QrCode, History, User } from "lucide-react";
+import { Home, QrCode, Coins, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 
@@ -28,36 +28,35 @@ export default function BottomNav() {
           
           <Button
             variant="ghost"
-            className="flex flex-col items-center p-3 text-gray-400 hover:text-primary transition-colors min-h-touch"
-            onClick={() => {
-              // Trigger QR scanner from home page
-              window.location.href = "/?action=scan";
-            }}
+            className={`flex flex-col items-center p-3 min-h-touch ${
+              isActive("/demo-stores") ? "text-primary" : "text-gray-400 hover:text-primary"
+            }`}
+            onClick={() => window.location.href = "/demo-stores"}
           >
             <QrCode className="w-6 h-6 mb-1" />
-            <span className="text-sm font-medium">スキャン</span>
+            <span className="text-sm font-medium">店舗</span>
           </Button>
           
           <Button
             variant="ghost"
             className={`flex flex-col items-center p-3 min-h-touch ${
-              isActive("/history") ? "text-primary" : "text-gray-400 hover:text-primary"
+              isActive("/coin-transfer") ? "text-primary" : "text-gray-400 hover:text-primary"
             }`}
-            onClick={() => window.location.href = "/history"}
+            onClick={() => window.location.href = "/coin-transfer"}
           >
-            <History className="w-6 h-6 mb-1" />
-            <span className="text-sm font-medium">履歴</span>
+            <Coins className="w-6 h-6 mb-1" />
+            <span className="text-sm font-medium">送金</span>
           </Button>
           
           <Button
             variant="ghost"
             className={`flex flex-col items-center p-3 min-h-touch ${
-              isActive("/profile") ? "text-primary" : "text-gray-400 hover:text-primary"
+              isActive("/nft-collection") ? "text-primary" : "text-gray-400 hover:text-primary"
             }`}
-            onClick={() => window.location.href = "/profile"}
+            onClick={() => window.location.href = "/nft-collection"}
           >
-            <User className="w-6 h-6 mb-1" />
-            <span className="text-sm font-medium">プロフィール</span>
+            <Award className="w-6 h-6 mb-1" />
+            <span className="text-sm font-medium">NFT</span>
           </Button>
         </div>
       </div>
