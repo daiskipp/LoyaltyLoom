@@ -357,20 +357,23 @@ export default function StoreDetail() {
                 <div className="flex-1">
                   <p className="font-medium text-gray-900">住所</p>
                   <p className="text-gray-600">{store.address}</p>
-                  {store.latitude && store.longitude && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => {
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      if (store.latitude && store.longitude) {
                         const googleMapsUrl = `https://www.google.com/maps?q=${store.latitude},${store.longitude}`;
                         window.open(googleMapsUrl, '_blank');
-                      }}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      地図で見る
-                    </Button>
-                  )}
+                      } else if (store.address) {
+                        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`;
+                        window.open(googleMapsUrl, '_blank');
+                      }
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    地図で見る
+                  </Button>
                 </div>
               </div>
 
