@@ -11,6 +11,7 @@ import History from "@/pages/history";
 import Profile from "@/pages/profile";
 import ProfileEdit from "@/pages/profile-edit";
 import DemoStores from "@/pages/demo-stores";
+import DemoFavoriteStores from "@/pages/demo-favorite-stores";
 import CoinTransfer from "@/pages/coin-transfer";
 import NftCollection from "@/pages/nft-collection";
 
@@ -28,6 +29,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/profile/edit" component={ProfileEdit} />
           <Route path="/demo-stores" component={DemoStores} />
+          <Route path="/demo-favorite-stores" component={DemoFavoriteStores} />
           <Route path="/coin-transfer" component={CoinTransfer} />
           <Route path="/nft-collection" component={NftCollection} />
         </>

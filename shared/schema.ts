@@ -8,6 +8,7 @@ import {
   integer,
   text,
   boolean,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -105,11 +106,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   receivedCoinTransactions: many(coinTransactions, { relationName: "receivedTransactions" }),
   addressBookEntries: many(addressBook, { relationName: "addressBookEntries" }),
   nfts: many(userNfts),
+  favoriteStores: many(favoriteStores),
 }));
 
 export const storesRelations = relations(stores, ({ many }) => ({
   pointTransactions: many(pointTransactions),
   storeVisits: many(storeVisits),
+  favoriteUsers: many(favoriteStores),
+  announcements: many(announcements),
 }));
 
 export const pointTransactionsRelations = relations(pointTransactions, ({ one }) => ({
@@ -261,6 +265,8 @@ export const userNftsRelations = relations(userNfts, ({ one }) => ({
 
 
 
+
+
 export type CoinTransaction = typeof coinTransactions.$inferSelect;
 export type InsertCoinTransaction = typeof coinTransactions.$inferInsert;
 export type AddressBookEntry = typeof addressBook.$inferSelect;
@@ -279,7 +285,7 @@ export const announcements = pgTable("announcements", {
   content: text("content").notNull(),
   type: varchar("type", { length: 50 }).notNull().default("info"), // info, event, promotion, urgent
   priority: integer("priority").notNull().default(1), // 1-5, higher is more important
-  storeId: varchar("store_id"),
+  storeId: varchar("store_id").references(() => stores.id),
   isActive: boolean("is_active").notNull().default(true),
   startDate: timestamp("start_date").defaultNow(),
   endDate: timestamp("end_date"),
@@ -289,8 +295,20 @@ export const announcements = pgTable("announcements", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Favorite stores table for user store preferences
+export const favoriteStores = pgTable("favorite_stores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  storeId: varchar("store_id").notNull().references(() => stores.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueUserStore: unique("unique_user_store").on(table.userId, table.storeId),
+}));
+
 export type Announcement = typeof announcements.$inferSelect;
 export type InsertAnnouncement = typeof announcements.$inferInsert;
+export type FavoriteStore = typeof favoriteStores.$inferSelect;
+export type InsertFavoriteStore = typeof favoriteStores.$inferInsert;
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = z.infer<typeof insertStoreSchema>;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
@@ -300,3 +318,22 @@ export type InsertStoreVisit = z.infer<typeof insertStoreVisitSchema>;
 export type PasskeyCredential = typeof passkeyCredentials.$inferSelect;
 export type InsertPasskeyCredential = z.infer<typeof insertPasskeyCredentialSchema>;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
+
+// Relations for favorite stores and announcements
+export const favoriteStoresRelations = relations(favoriteStores, ({ one }) => ({
+  user: one(users, {
+    fields: [favoriteStores.userId],
+    references: [users.id],
+  }),
+  store: one(stores, {
+    fields: [favoriteStores.storeId],
+    references: [stores.id],
+  }),
+}));
+
+export const announcementsRelations = relations(announcements, ({ one }) => ({
+  store: one(stores, {
+    fields: [announcements.storeId],
+    references: [stores.id],
+  }),
+}));

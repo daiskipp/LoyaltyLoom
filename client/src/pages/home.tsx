@@ -99,9 +99,9 @@ export default function Home() {
     enabled: !!user,
   });
 
-  // Fetch announcements data
+  // Fetch announcements data (filtered by favorite stores)
   const { data: announcements = [] } = useQuery<Announcement[]>({
-    queryKey: ["/api/announcements"],
+    queryKey: ["/api/announcements/filtered"],
     enabled: !!user,
   });
 

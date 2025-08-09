@@ -27,11 +27,14 @@ import {
   type UserNft,
   type InsertUserNft,
   announcements,
+  favoriteStores,
   type Announcement,
   type InsertAnnouncement,
+  type FavoriteStore,
+  type InsertFavoriteStore,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, ne } from "drizzle-orm";
+import { eq, desc, and, sql, ne, inArray } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -87,9 +90,16 @@ export interface IStorage {
 
   // Announcement operations
   getActiveAnnouncements(): Promise<Announcement[]>;
+  getAnnouncementsForUser(userId: string): Promise<Announcement[]>;
   createAnnouncement(announcementData: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: string, announcementData: Partial<InsertAnnouncement>): Promise<Announcement>;
   deleteAnnouncement(id: string): Promise<void>;
+
+  // Favorite store operations
+  getFavoriteStores(userId: string): Promise<(FavoriteStore & { store: { id: string; name: string; }})[]>;
+  addFavoriteStore(userId: string, storeId: string): Promise<FavoriteStore>;
+  removeFavoriteStore(userId: string, storeId: string): Promise<void>;
+  isFavoriteStore(userId: string, storeId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -495,6 +505,88 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(announcements)
       .where(eq(announcements.id, id));
+  }
+
+  async getAnnouncementsForUser(userId: string): Promise<Announcement[]> {
+    // Get user's favorite stores
+    const favoriteStoreIds = await db
+      .select({ storeId: favoriteStores.storeId })
+      .from(favoriteStores)
+      .where(eq(favoriteStores.userId, userId));
+
+    const favoriteStoreIdList = favoriteStoreIds.map(fs => fs.storeId);
+
+    const now = new Date();
+    return await db
+      .select()
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.isActive, true),
+          sql`(${announcements.endDate} IS NULL OR ${announcements.endDate} > ${now})`,
+          favoriteStoreIdList.length > 0 
+            ? sql`(${announcements.storeId} IS NULL OR ${announcements.storeId} = ANY(ARRAY[${favoriteStoreIdList.map(id => `'${id}'`).join(',')}]))`
+            : sql`${announcements.storeId} IS NULL`
+        )
+      )
+      .orderBy(desc(announcements.priority), desc(announcements.createdAt));
+  }
+
+  // Favorite store operations
+  async getFavoriteStores(userId: string): Promise<(FavoriteStore & { store: { id: string; name: string; }})[]> {
+    const results = await db
+      .select({
+        id: favoriteStores.id,
+        userId: favoriteStores.userId,
+        storeId: favoriteStores.storeId,
+        createdAt: favoriteStores.createdAt,
+        store: {
+          id: stores.id,
+          name: stores.name,
+        }
+      })
+      .from(favoriteStores)
+      .innerJoin(stores, eq(favoriteStores.storeId, stores.id))
+      .where(eq(favoriteStores.userId, userId))
+      .orderBy(desc(favoriteStores.createdAt));
+
+    return results;
+  }
+
+  async addFavoriteStore(userId: string, storeId: string): Promise<FavoriteStore> {
+    const [favoriteStore] = await db
+      .insert(favoriteStores)
+      .values({
+        userId,
+        storeId,
+      })
+      .onConflictDoNothing()
+      .returning();
+    return favoriteStore;
+  }
+
+  async removeFavoriteStore(userId: string, storeId: string): Promise<void> {
+    await db
+      .delete(favoriteStores)
+      .where(
+        and(
+          eq(favoriteStores.userId, userId),
+          eq(favoriteStores.storeId, storeId)
+        )
+      );
+  }
+
+  async isFavoriteStore(userId: string, storeId: string): Promise<boolean> {
+    const result = await db
+      .select({ id: favoriteStores.id })
+      .from(favoriteStores)
+      .where(
+        and(
+          eq(favoriteStores.userId, userId),
+          eq(favoriteStores.storeId, storeId)
+        )
+      );
+    return result.length > 0;
   }
 }
 

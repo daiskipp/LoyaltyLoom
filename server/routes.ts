@@ -369,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error transferring coins:", error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Transfer failed" });
     }
   });
 
@@ -419,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error adding to address book:", error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to add address book entry" });
     }
   });
 
@@ -440,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error updating address book entry:", error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to update address book entry" });
     }
   });
 
@@ -454,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error removing from address book:", error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to remove from address book" });
     }
   });
 
@@ -503,7 +503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error creating NFT:", error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create NFT" });
     }
   });
 
@@ -522,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error awarding NFT:", error);
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to award NFT" });
     }
   });
 
@@ -534,6 +534,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching announcements:", error);
       res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+  });
+
+  // Get filtered announcements for authenticated user (global + favorite stores)
+  app.get("/api/announcements/filtered", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const announcements = await storage.getAnnouncementsForUser(userId);
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching filtered announcements:", error);
+      res.status(500).json({ message: "Failed to fetch filtered announcements" });
+    }
+  });
+
+  // Get user's favorite stores
+  app.get("/api/favorite-stores", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favoriteStores = await storage.getFavoriteStores(userId);
+      res.json(favoriteStores);
+    } catch (error) {
+      console.error("Error fetching favorite stores:", error);
+      res.status(500).json({ message: "Failed to fetch favorite stores" });
+    }
+  });
+
+  // Add a store to favorites
+  app.post("/api/favorite-stores", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { storeId } = req.body;
+      
+      if (!storeId) {
+        return res.status(400).json({ message: "Store ID is required" });
+      }
+
+      const favoriteStore = await storage.addFavoriteStore(userId, storeId);
+      res.json(favoriteStore);
+    } catch (error) {
+      console.error("Error adding favorite store:", error);
+      res.status(500).json({ message: "Failed to add favorite store" });
+    }
+  });
+
+  // Remove a store from favorites
+  app.delete("/api/favorite-stores/:storeId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { storeId } = req.params;
+
+      await storage.removeFavoriteStore(userId, storeId);
+      res.json({ message: "Store removed from favorites" });
+    } catch (error) {
+      console.error("Error removing favorite store:", error);
+      res.status(500).json({ message: "Failed to remove favorite store" });
+    }
+  });
+
+  // Check if a store is favorited
+  app.get("/api/favorite-stores/:storeId/check", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { storeId } = req.params;
+
+      const isFavorite = await storage.isFavoriteStore(userId, storeId);
+      res.json({ isFavorite });
+    } catch (error) {
+      console.error("Error checking favorite store:", error);
+      res.status(500).json({ message: "Failed to check favorite store" });
     }
   });
 
