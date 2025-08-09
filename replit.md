@@ -76,7 +76,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### 2025-08-09: Store Announcements System Implementation
+### 2025-08-09: Store Announcements System & Favorite Stores UX Improvement
 - ✅ Created announcements database table with comprehensive schema
 - ✅ Added announcement storage operations (CRUD) to backend
 - ✅ Implemented API endpoints for announcements (/api/announcements)
@@ -85,6 +85,11 @@ Preferred communication style: Simple, everyday language.
 - ✅ Color-coded announcement cards with left border styling
 - ✅ TypeScript interfaces and error handling for announcements
 - ✅ Fixed all TypeScript errors for user data display
+- ✅ Integrated favorite store buttons directly into store list page
+- ✅ Enhanced store cards with favorite heart icons and visual feedback
+- ✅ Added store type badges and improved reward display formatting
+- ✅ Updated announcement filtering to show global + favorite store announcements
+- ✅ Improved UX by removing separate favorite stores demo page
 
 ### Previous: Simplified Color Scheme Implementation
 - ✅ Redesigned membership card with premium styling and user info display

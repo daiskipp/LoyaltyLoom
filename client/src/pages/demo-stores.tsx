@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
-import { ArrowLeft, Store, QrCode } from "lucide-react";
+import { ArrowLeft, Store, QrCode, Heart, HeartOff, MapPin } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -13,13 +14,28 @@ interface Store {
   id: string;
   name: string;
   address: string;
-  qrCode: string;
-  pointsPerVisit: number;
+  storeType: string;
+  experiencePerVisit: number;
+  loyaltyPerVisit: number;
+  coinsPerVisit: number;
+  gemsPerVisit: number;
+}
+
+interface FavoriteStore {
+  id: string;
+  userId: string;
+  storeId: string;
+  createdAt: string;
+  store: {
+    id: string;
+    name: string;
+  };
 }
 
 export default function DemoStores() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -40,20 +56,71 @@ export default function DemoStores() {
   const { data: stores = [], isLoading: storesLoading } = useQuery<Store[]>({
     queryKey: ["/api/stores"],
     enabled: !!user,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "未認証",
-          description: "ログアウトされました。再度ログインします...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+  });
+
+  // Fetch user's favorite stores
+  const { data: favoriteStores = [] } = useQuery<FavoriteStore[]>({
+    queryKey: ["/api/favorite-stores"],
+    enabled: !!user,
+  });
+
+  // Add to favorites mutation
+  const addFavoriteMutation = useMutation({
+    mutationFn: async (storeId: string) => {
+      const response = await apiRequest("POST", "/api/favorite-stores", { storeId });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorite-stores"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements/filtered"] });
+      toast({
+        title: "お気に入り追加",
+        description: "店舗をお気に入りに追加しました",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "エラー",
+        description: "お気に入りの追加に失敗しました",
+        variant: "destructive",
+      });
     },
   });
+
+  // Remove from favorites mutation
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async (storeId: string) => {
+      const response = await apiRequest("DELETE", `/api/favorite-stores/${storeId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorite-stores"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements/filtered"] });
+      toast({
+        title: "お気に入り削除",
+        description: "店舗をお気に入りから削除しました",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "エラー",
+        description: "お気に入りの削除に失敗しました",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const isFavorite = (storeId: string) => {
+    return favoriteStores.some(fs => fs.storeId === storeId);
+  };
+
+  const toggleFavorite = (storeId: string) => {
+    if (isFavorite(storeId)) {
+      removeFavoriteMutation.mutate(storeId);
+    } else {
+      addFavoriteMutation.mutate(storeId);
+    }
+  };
 
   // Fetch QR code for a store
   const getQRCode = async (storeId: string) => {
@@ -70,7 +137,7 @@ export default function DemoStores() {
           qrWindow.document.write(`
             <html>
               <head>
-                <title>QRコード - ${stores.find(s => s.id === storeId)?.name}</title>
+                <title>QRコード - ${stores.find((s: Store) => s.id === storeId)?.name}</title>
                 <style>
                   body { 
                     font-family: 'Noto Sans JP', sans-serif; 
@@ -116,10 +183,10 @@ export default function DemoStores() {
               </head>
               <body>
                 <div class="container">
-                  <h1>${stores.find(s => s.id === storeId)?.name}</h1>
+                  <h1>${stores.find((s: Store) => s.id === storeId)?.name}</h1>
                   <p>このQRコードをスキャンしてチェックイン</p>
                   <img src="${data.qrCode}" alt="QRコード" />
-                  <div class="points">+${stores.find(s => s.id === storeId)?.pointsPerVisit}pt</div>
+                  <div class="points">XP+${stores.find((s: Store) => s.id === storeId)?.experiencePerVisit} LP+${stores.find((s: Store) => s.id === storeId)?.loyaltyPerVisit} C+${stores.find((s: Store) => s.id === storeId)?.coinsPerVisit}</div>
                 </div>
               </body>
             </html>
@@ -203,42 +270,81 @@ export default function DemoStores() {
               </p>
             </div>
             
-            {stores.map((store) => (
-              <Card key={store.id} className="card-senior">
-                <CardHeader>
-                  <CardTitle className="text-senior-lg flex items-center">
-                    <Store className="w-6 h-6 mr-3 text-primary" />
-                    {store.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {store.address && (
-                      <p className="text-senior text-gray-600">
-                        📍 {store.address}
-                      </p>
-                    )}
-                    
+            {stores.map((store) => {
+              const isStoreFavorited = isFavorite(store.id);
+              const getStoreTypeColor = (storeType: string) => {
+                switch (storeType) {
+                  case "カフェ":
+                    return "bg-orange-100 text-orange-800 border-orange-200";
+                  case "レストラン":
+                    return "bg-red-100 text-red-800 border-red-200";
+                  case "小売店":
+                    return "bg-blue-100 text-blue-800 border-blue-200";
+                  default:
+                    return "bg-gray-100 text-gray-800 border-gray-200";
+                }
+              };
+              
+              return (
+                <Card key={store.id} className={`card-senior transition-all duration-200 ${
+                  isStoreFavorited ? 'border-pink-200 bg-pink-50' : 'border-gray-200 bg-white'
+                }`}>
+                  <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className="text-senior text-gray-600 mr-2">獲得ポイント:</span>
-                        <span className="text-senior-lg font-bold text-success">
-                          +{store.pointsPerVisit}pt
-                        </span>
-                      </div>
+                      <CardTitle className="text-senior-lg flex items-center">
+                        <Store className={`w-6 h-6 mr-3 ${isStoreFavorited ? 'text-pink-600' : 'text-primary'}`} />
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            {store.name}
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStoreTypeColor(store.storeType)}`}>
+                              {store.storeType}
+                            </span>
+                          </div>
+                        </div>
+                      </CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleFavorite(store.id)}
+                        disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+                        className={`${isStoreFavorited ? 
+                          "border-pink-300 text-pink-600 hover:bg-pink-100" : 
+                          "border-gray-300 text-gray-600 hover:bg-gray-100"
+                        } min-h-[44px] w-[44px]`}
+                      >
+                        {isStoreFavorited ? (
+                          <Heart className="w-4 h-4 fill-current" />
+                        ) : (
+                          <HeartOff className="w-4 h-4" />
+                        )}
+                      </Button>
                     </div>
-                    
-                    <Button
-                      onClick={() => getQRCode(store.id)}
-                      className="w-full button-senior bg-primary hover:bg-blue-600 text-white mt-4"
-                    >
-                      <QrCode className="w-5 h-5 mr-3" />
-                      QRコードを表示
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {store.address && (
+                        <div className="flex items-center text-senior text-gray-600">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          {store.address}
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">
+                        報酬: XP{store.experiencePerVisit} / ポイント{store.loyaltyPerVisit} / コイン{store.coinsPerVisit} / ジェム{store.gemsPerVisit}
+                      </div>
+                      
+                      <Button
+                        onClick={() => getQRCode(store.id)}
+                        className="w-full button-senior bg-primary hover:bg-blue-600 text-white mt-4"
+                      >
+                        <QrCode className="w-5 h-5 mr-3" />
+                        QRコードを表示
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </main>
