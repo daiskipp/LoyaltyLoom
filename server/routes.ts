@@ -58,6 +58,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single store by ID
+  app.get('/api/stores/:id', isAuthenticated, async (req, res) => {
+    try {
+      const storeId = req.params.id;
+      const stores = await storage.getStores();
+      const store = stores.find(s => s.id === storeId);
+      
+      if (!store) {
+        return res.status(404).json({ message: "Store not found" });
+      }
+      
+      res.json(store);
+    } catch (error) {
+      console.error("Error fetching store:", error);
+      res.status(500).json({ message: "Failed to fetch store" });
+    }
+  });
+
   app.post('/api/stores', isAuthenticated, async (req, res) => {
     try {
       const { name, address, pointsPerVisit } = req.body;
