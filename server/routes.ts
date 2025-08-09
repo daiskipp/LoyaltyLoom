@@ -38,8 +38,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedUser = await storage.updateUserProfile(userId, validationResult.data);
       res.json(updatedUser);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user profile:", error);
+      if (error.message && error.message.includes('既に使用されています')) {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to update profile" });
     }
   });

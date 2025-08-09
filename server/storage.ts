@@ -28,7 +28,7 @@ import {
   type InsertUserNft,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, ne } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -145,7 +145,22 @@ export class DatabaseStorage implements IStorage {
     return updatedUser;
   }
 
-  async updateUserProfile(userId: string, profileData: { firstName?: string; lastName?: string }): Promise<User> {
+  async updateUserProfile(userId: string, profileData: { nickname?: string; userId?: string }): Promise<User> {
+    // Check if userId is already taken by another user
+    if (profileData.userId) {
+      const existingUser = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.userId, profileData.userId),
+          ne(users.id, userId)
+        ));
+      
+      if (existingUser.length > 0) {
+        throw new Error('このユーザーIDは既に使用されています');
+      }
+    }
+
     const [updatedUser] = await db
       .update(users)
       .set({ 

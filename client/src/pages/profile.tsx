@@ -45,8 +45,8 @@ export default function Profile() {
     return null;
   }
 
-  const currentPoints = user.currentPoints || 0;
-  const rank = user.rank || 'ブロンズ';
+  const currentPoints = (user as any).loyaltyPoints || 0;
+  const rank = (user as any).rank || 'ブロンズ';
 
   const getRankIcon = (rank: string) => {
     switch (rank) {
@@ -95,9 +95,9 @@ export default function Profile() {
         <Card className="card-senior mb-6">
           <CardContent className="text-center">
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              {user.profileImageUrl ? (
+              {(user as any).profileImageUrl ? (
                 <img 
-                  src={user.profileImageUrl} 
+                  src={(user as any).profileImageUrl} 
                   alt="プロフィール"
                   className="w-24 h-24 rounded-full object-cover"
                 />
@@ -107,14 +107,15 @@ export default function Profile() {
             </div>
             
             <h2 className="text-senior-xl font-bold text-text mb-2">
-              {user.firstName || user.lastName 
-                ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-                : 'ゲスト'
-              }
+              {(user as any).nickname || 'ゲスト'}
             </h2>
             
-            {user.email && (
-              <p className="text-senior text-gray-600 mb-4">{user.email}</p>
+            {(user as any).userId && (
+              <p className="text-senior text-gray-600 mb-2">@{(user as any).userId}</p>
+            )}
+            
+            {(user as any).email && (
+              <p className="text-senior text-gray-600 mb-4">{(user as any).email}</p>
             )}
             
             <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${getRankColor(rank)} border-2 mb-4`}>
@@ -123,7 +124,7 @@ export default function Profile() {
             </div>
             
             <Button
-              onClick={() => window.location.href = "/profile/edit"}
+              onClick={() => window.location.href = "/profile-edit"}
               variant="outline"
               className="button-senior border-primary text-primary hover:bg-primary hover:text-white"
             >

@@ -100,12 +100,10 @@ export default function HamburgerMenu() {
             )}
             <div>
               <SheetTitle className="text-white text-left">
-                {user?.firstName || user?.lastName 
-                  ? `${user?.firstName || ""} ${user?.lastName || ""}`.trim()
-                  : "ユーザー"}
+                {(user as any)?.nickname || "ユーザー"}
               </SheetTitle>
               <p className="text-sm text-white/80 text-left">
-                レベル {user?.level || 1} • {user?.rank || "ブロンズ"}
+                {(user as any)?.userId && `@${(user as any).userId} • `}レベル {(user as any)?.level || 1} • {(user as any)?.rank || "ブロンズ"}
               </p>
             </div>
           </div>

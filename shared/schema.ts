@@ -30,8 +30,10 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
+  firstName: varchar("first_name"), // Keep for Replit Auth compatibility
+  lastName: varchar("last_name"),   // Keep for Replit Auth compatibility
+  nickname: varchar("nickname"),    // User's chosen display name
+  userId: varchar("user_id").unique(), // User's chosen alphanumeric ID
   profileImageUrl: varchar("profile_image_url"),
   experiencePoints: integer("experience_points").default(0), // 経験値 (XP)
   loyaltyPoints: integer("loyalty_points").default(0),       // ロイヤルティポイント
@@ -160,11 +162,14 @@ export const insertPasskeyCredentialSchema = createInsertSchema(passkeyCredentia
 });
 
 export const updateUserProfileSchema = createInsertSchema(users).pick({
-  firstName: true,
-  lastName: true,
+  nickname: true,
+  userId: true,
 }).extend({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
+  nickname: z.string().min(1, "ニックネームを入力してください").max(30, "ニックネームは30文字以内で入力してください"),
+  userId: z.string()
+    .min(3, "ユーザーIDは3文字以上で入力してください")
+    .max(20, "ユーザーIDは20文字以内で入力してください")
+    .regex(/^[a-zA-Z0-9_]+$/, "ユーザーIDは英数字とアンダースコアのみ使用できます"),
 });
 
 // Types

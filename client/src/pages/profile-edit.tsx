@@ -16,14 +16,14 @@ export default function ProfileEdit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [userId, setUserId] = useState("");
 
   // Initialize form with current user data
   useEffect(() => {
     if (user) {
-      setFirstName(user.firstName || "");
-      setLastName(user.lastName || "");
+      setNickname(user.nickname || "");
+      setUserId(user.userId || "");
     }
   }, [user]);
 
@@ -44,7 +44,7 @@ export default function ProfileEdit() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (profileData: { firstName?: string; lastName?: string }) => {
+    mutationFn: async (profileData: { nickname?: string; userId?: string }) => {
       const res = await apiRequest("PATCH", "/api/auth/user", profileData);
       return res.json();
     },
@@ -53,16 +53,16 @@ export default function ProfileEdit() {
       toast({
         title: "更新完了",
         description: "プロフィールが正常に更新されました。",
-        variant: "default",
       });
-      // Navigate back to profile page
-      window.history.back();
+      setTimeout(() => {
+        window.location.href = "/profile";
+      }, 1000);
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "未認証",
-          description: "ログアウトされました。再度ログインします...",
+          description: "ログインが必要です。ログイン画面に移動します...",
           variant: "destructive",
         });
         setTimeout(() => {
@@ -70,158 +70,168 @@ export default function ProfileEdit() {
         }, 500);
         return;
       }
-      
       toast({
-        title: "更新エラー",
-        description: "プロフィールの更新に失敗しました。もう一度お試しください。",
+        title: "更新失敗",
+        description: error.message || "プロフィールの更新に失敗しました。",
         variant: "destructive",
       });
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const profileData: { firstName?: string; lastName?: string } = {};
-    
-    if (firstName.trim()) profileData.firstName = firstName.trim();
-    if (lastName.trim()) profileData.lastName = lastName.trim();
-    
-    updateProfileMutation.mutate(profileData);
+    // Basic validation
+    if (!nickname.trim()) {
+      toast({
+        title: "入力エラー",
+        description: "ニックネームを入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!userId.trim()) {
+      toast({
+        title: "入力エラー",
+        description: "ユーザーIDを入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate userId format
+    if (!/^[a-zA-Z0-9_]+$/.test(userId)) {
+      toast({
+        title: "入力エラー",
+        description: "ユーザーIDは英数字とアンダースコアのみ使用できます。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (userId.length < 3 || userId.length > 20) {
+      toast({
+        title: "入力エラー",
+        description: "ユーザーIDは3文字以上20文字以内で入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (nickname.length > 30) {
+      toast({
+        title: "入力エラー",
+        description: "ニックネームは30文字以内で入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateProfileMutation.mutate({
+      nickname: nickname.trim(),
+      userId: userId.trim(),
+    });
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-senior text-gray-600">読み込み中...</p>
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50 pt-16 pb-20">
+          <div className="max-w-md mx-auto px-6 py-8">
+            <div className="text-center text-gray-500">読み込み中...</div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <Header />
-      
-      <main className="max-w-md mx-auto px-6 pb-24">
-        {/* Header with back button */}
-        <div className="flex items-center mb-6 mt-6">
-          <Button
-            onClick={() => window.history.back()}
-            variant="ghost"
-            className="p-2 h-auto mr-3"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Button>
-          <h1 className="text-2xl font-bold text-text">プロフィール編集</h1>
+      <div className="min-h-screen bg-gray-50 pt-16 pb-20">
+        <div className="max-w-md mx-auto px-6 py-8">
+          {/* Header */}
+          <div className="flex items-center mb-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-3"
+              onClick={() => window.location.href = "/profile"}
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </Button>
+            <h1 className="text-xl font-bold text-gray-900">プロフィール編集</h1>
+          </div>
+
+          {/* Profile Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-lg">
+                <User className="w-5 h-5 mr-2 text-primary" />
+                プロフィール情報
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="nickname" className="text-sm font-medium text-gray-700">
+                    ニックネーム
+                  </Label>
+                  <Input
+                    id="nickname"
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="例: 山田太郎"
+                    className="text-lg min-h-touch"
+                    maxLength={30}
+                  />
+                  <p className="text-xs text-gray-500">
+                    30文字以内で入力してください
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="userId" className="text-sm font-medium text-gray-700">
+                    ユーザーID
+                  </Label>
+                  <Input
+                    id="userId"
+                    type="text"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    placeholder="例: yamada_taro"
+                    className="text-lg min-h-touch"
+                    maxLength={20}
+                  />
+                  <p className="text-xs text-gray-500">
+                    3〜20文字、英数字とアンダースコアのみ使用可能
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    type="submit"
+                    disabled={updateProfileMutation.isPending}
+                    className="w-full min-h-touch text-lg font-semibold"
+                  >
+                    {updateProfileMutation.isPending ? (
+                      "更新中..."
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5 mr-2" />
+                        更新する
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Profile Edit Form */}
-        <Card className="card-senior mb-6">
-          <CardHeader>
-            <CardTitle className="text-senior-lg flex items-center">
-              <User className="w-6 h-6 mr-3" />
-              基本情報
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-senior font-medium text-text">
-                  名前（名）
-                </Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="例: 太郎"
-                  className="text-senior min-h-touch border-2 border-gray-200 focus:border-primary rounded-lg"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-senior font-medium text-text">
-                  名前（姓）
-                </Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="例: 田中"
-                  className="text-senior min-h-touch border-2 border-gray-200 focus:border-primary rounded-lg"
-                />
-              </div>
-
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  disabled={updateProfileMutation.isPending}
-                  className="w-full button-senior bg-primary hover:bg-blue-600 text-white"
-                >
-                  {updateProfileMutation.isPending ? (
-                    <>
-                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
-                      更新中...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5 mr-3" />
-                      保存する
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Current Email (Read-only) */}
-        <Card className="card-senior mb-6">
-          <CardHeader>
-            <CardTitle className="text-senior-lg">アカウント情報</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label className="text-senior font-medium text-text">
-                メールアドレス
-              </Label>
-              <div className="p-3 bg-gray-50 rounded-lg border-2 border-gray-100">
-                <p className="text-senior text-gray-600">
-                  {user.email || "未設定"}
-                </p>
-              </div>
-              <p className="text-sm text-gray-500">
-                メールアドレスの変更はサポートまでお問い合わせください
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Helper Info */}
-        <Card className="card-senior bg-blue-50 border-blue-200">
-          <CardContent>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-primary rounded-full mt-3 flex-shrink-0"></div>
-              <div>
-                <p className="text-senior text-blue-800 font-medium mb-1">
-                  プロフィール情報について
-                </p>
-                <p className="text-base text-blue-700">
-                  名前情報は他のユーザーには表示されません。アプリ内での表示とサポート対応にのみ使用されます。
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
