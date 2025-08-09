@@ -40,6 +40,20 @@ interface Activity {
   createdAt: string;
 }
 
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  type: "info" | "event" | "promotion" | "urgent";
+  priority: number;
+  storeId?: string;
+  startDate: string;
+  endDate?: string;
+  imageUrl?: string;
+  actionUrl?: string;
+  createdAt: string;
+}
+
 export default function Home() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
@@ -82,6 +96,25 @@ export default function Home() {
   // Fetch activity data
   const { data: activities = [] } = useQuery<Activity[]>({
     queryKey: ["/api/activity"],
+    enabled: !!user,
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "未認証",
+          description: "ログアウトされました。再度ログインします...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+    },
+  });
+
+  // Fetch announcements data
+  const { data: announcements = [] } = useQuery<Announcement[]>({
+    queryKey: ["/api/announcements"],
     enabled: !!user,
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -169,6 +202,34 @@ export default function Home() {
     },
   });
 
+  // Initialize demo announcements mutation
+  const initAnnouncementsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/init-announcements", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      toast({
+        title: "お知らせ作成完了",
+        description: "デモお知らせが作成されました！",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "未認証",
+          description: "ログアウトされました。再度ログインします...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+    },
+  });
+
   if (isLoading || !userData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -221,6 +282,67 @@ export default function Home() {
       <Header />
       
       <main className="max-w-md mx-auto px-6 pb-24">
+        {/* Announcements Section */}
+        {announcements.length > 0 && (
+          <div className="space-y-4 mb-6 mt-6">
+            <h2 className="text-xl font-bold text-gray-900">お知らせ</h2>
+            <div className="space-y-3">
+              {announcements.map((announcement) => (
+                <div
+                  key={announcement.id}
+                  className={`
+                    p-4 rounded-lg border-l-4 bg-white shadow-sm
+                    ${announcement.type === "urgent" ? "border-red-500 bg-red-50" : 
+                      announcement.type === "promotion" ? "border-blue-500 bg-blue-50" :
+                      announcement.type === "event" ? "border-green-500 bg-green-50" :
+                      "border-gray-500 bg-gray-50"}
+                  `}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 text-lg mb-2">
+                        {announcement.title}
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed mb-2">
+                        {announcement.content}
+                      </p>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span>
+                          {new Date(announcement.createdAt).toLocaleDateString('ja-JP', {
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric',
+                          })}
+                        </span>
+                        {announcement.endDate && (
+                          <span className="ml-4">
+                            期限: {new Date(announcement.endDate).toLocaleDateString('ja-JP', {
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className={`
+                      px-3 py-1 rounded-full text-xs font-medium ml-4
+                      ${announcement.type === "urgent" ? "bg-red-100 text-red-800" :
+                        announcement.type === "promotion" ? "bg-blue-100 text-blue-800" :
+                        announcement.type === "event" ? "bg-green-100 text-green-800" :
+                        "bg-gray-100 text-gray-800"}
+                    `}>
+                      {announcement.type === "urgent" ? "緊急" :
+                       announcement.type === "promotion" ? "キャンペーン" :
+                       announcement.type === "event" ? "イベント" : "お知らせ"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* RPG-Style Stats Cards */}
         <div className="space-y-4 mb-6 mt-6">
           {/* Membership Card */}
@@ -414,6 +536,13 @@ export default function Home() {
                   QRコードをスキャンして最初のポイントを獲得しましょう！
                 </p>
                 <div className="space-y-3">
+                  <Button
+                    onClick={() => initAnnouncementsMutation.mutate()}
+                    disabled={initAnnouncementsMutation.isPending}
+                    className="w-full button-senior bg-blue-600 hover:bg-blue-700 text-white mb-2"
+                  >
+                    {initAnnouncementsMutation.isPending ? "作成中..." : "お知らせを作成"}
+                  </Button>
                   <Button
                     onClick={() => initDemoMutation.mutate()}
                     disabled={initDemoMutation.isPending}

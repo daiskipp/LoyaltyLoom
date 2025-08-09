@@ -526,6 +526,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Announcements endpoints
+  app.get('/api/announcements', isAuthenticated, async (req, res) => {
+    try {
+      const announcements = await storage.getActiveAnnouncements();
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+  });
+
+  app.post('/api/announcements', isAuthenticated, async (req, res) => {
+    try {
+      const announcement = await storage.createAnnouncement(req.body);
+      res.json(announcement);
+    } catch (error) {
+      console.error("Error creating announcement:", error);
+      res.status(500).json({ message: "Failed to create announcement" });
+    }
+  });
+
+  // Initialize demo announcements
+  app.post('/api/init-announcements', isAuthenticated, async (req, res) => {
+    try {
+      const demoAnnouncements = [
+        {
+          title: "🎉 特別キャンペーン開催中！",
+          content: "今月限定でポイント2倍キャンペーンを実施中です。この機会にぜひご利用ください！",
+          type: "promotion",
+          priority: 5,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        },
+        {
+          title: "📱 新機能リリースのお知らせ",
+          content: "NFTコレクション機能が追加されました。イベント参加でレアなNFTを獲得しよう！",
+          type: "info",
+          priority: 3,
+        },
+        {
+          title: "🏪 新店舗オープン",
+          content: "渋谷店が新規オープンしました。オープン記念として初回来店でボーナスポイントプレゼント！",
+          type: "event",
+          priority: 4,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+        },
+        {
+          title: "⚠️ システムメンテナンスのお知らせ",
+          content: "本日23:00〜翌1:00の間、システムメンテナンスを行います。ご利用いただけない時間がございます。",
+          type: "urgent",
+          priority: 5,
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
+        }
+      ];
+
+      const created = [];
+      for (const announcementData of demoAnnouncements) {
+        const announcement = await storage.createAnnouncement(announcementData);
+        created.push(announcement);
+      }
+
+      res.json({
+        success: true,
+        count: created.length,
+        announcements: created,
+        message: `${created.length}件のお知らせを作成しました`,
+      });
+    } catch (error) {
+      console.error("Error creating demo announcements:", error);
+      res.status(500).json({ message: "Failed to create demo announcements" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

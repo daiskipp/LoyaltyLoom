@@ -26,6 +26,9 @@ import {
   type InsertNftCollection,
   type UserNft,
   type InsertUserNft,
+  announcements,
+  type Announcement,
+  type InsertAnnouncement,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, ne } from "drizzle-orm";
@@ -81,6 +84,12 @@ export interface IStorage {
   createNft(nft: InsertNftCollection): Promise<NftCollection>;
   awardNftToUser(userId: string, nftId: string, reason?: string, metadata?: any): Promise<UserNft>;
   getUserNftCount(userId: string): Promise<number>;
+
+  // Announcement operations
+  getActiveAnnouncements(): Promise<Announcement[]>;
+  createAnnouncement(announcementData: InsertAnnouncement): Promise<Announcement>;
+  updateAnnouncement(id: string, announcementData: Partial<InsertAnnouncement>): Promise<Announcement>;
+  deleteAnnouncement(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -445,6 +454,47 @@ export class DatabaseStorage implements IStorage {
       .from(userNfts)
       .where(eq(userNfts.userId, userId));
     return result[0]?.count || 0;
+  }
+
+  // Announcement operations
+  async getActiveAnnouncements(): Promise<Announcement[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.isActive, true),
+          sql`(${announcements.endDate} IS NULL OR ${announcements.endDate} > ${now})`
+        )
+      )
+      .orderBy(desc(announcements.priority), desc(announcements.createdAt));
+  }
+
+  async createAnnouncement(announcementData: InsertAnnouncement): Promise<Announcement> {
+    const [announcement] = await db
+      .insert(announcements)
+      .values(announcementData)
+      .returning();
+    return announcement;
+  }
+
+  async updateAnnouncement(id: string, announcementData: Partial<InsertAnnouncement>): Promise<Announcement> {
+    const [announcement] = await db
+      .update(announcements)
+      .set({
+        ...announcementData,
+        updatedAt: new Date(),
+      })
+      .where(eq(announcements.id, id))
+      .returning();
+    return announcement;
+  }
+
+  async deleteAnnouncement(id: string): Promise<void> {
+    await db
+      .delete(announcements)
+      .where(eq(announcements.id, id));
   }
 }
 

@@ -271,6 +271,26 @@ export type UserNft = typeof userNfts.$inferSelect;
 export type InsertUserNft = typeof userNfts.$inferInsert;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Announcements and Events
+export const announcements = pgTable("announcements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  type: varchar("type", { length: 50 }).notNull().default("info"), // info, event, promotion, urgent
+  priority: integer("priority").notNull().default(1), // 1-5, higher is more important
+  storeId: varchar("store_id"),
+  isActive: boolean("is_active").notNull().default(true),
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date"),
+  imageUrl: varchar("image_url"),
+  actionUrl: varchar("action_url"), // link to event page or promotion
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Announcement = typeof announcements.$inferSelect;
+export type InsertAnnouncement = typeof announcements.$inferInsert;
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = z.infer<typeof insertStoreSchema>;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
