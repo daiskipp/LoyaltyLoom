@@ -99,6 +99,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   pointTransactions: many(pointTransactions),
   storeVisits: many(storeVisits),
   passkeyCredentials: many(passkeyCredentials),
+  sentCoinTransactions: many(coinTransactions, { relationName: "sentTransactions" }),
+  receivedCoinTransactions: many(coinTransactions, { relationName: "receivedTransactions" }),
 }));
 
 export const storesRelations = relations(stores, ({ many }) => ({
@@ -164,6 +166,35 @@ export const updateUserProfileSchema = createInsertSchema(users).pick({
 });
 
 // Types
+// Coin transactions table for user-to-user transfers
+export const coinTransactions = pgTable("coin_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").references(() => users.id),
+  toUserId: varchar("to_user_id").notNull().references(() => users.id),
+  amount: integer("amount").notNull(),
+  message: varchar("message", { length: 500 }),
+  status: varchar("status").notNull().default("completed"), // completed, pending, cancelled
+  type: varchar("type").notNull().default("transfer"), // transfer, gift, reward
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const coinTransactionsRelations = relations(coinTransactions, ({ one }) => ({
+  fromUser: one(users, {
+    fields: [coinTransactions.fromUserId],
+    references: [users.id],
+    relationName: "sentTransactions",
+  }),
+  toUser: one(users, {
+    fields: [coinTransactions.toUserId],
+    references: [users.id],
+    relationName: "receivedTransactions",
+  }),
+}));
+
+
+
+export type CoinTransaction = typeof coinTransactions.$inferSelect;
+export type InsertCoinTransaction = typeof coinTransactions.$inferInsert;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Store = typeof stores.$inferSelect;

@@ -4,6 +4,7 @@ import {
   pointTransactions,
   storeVisits,
   passkeyCredentials,
+  coinTransactions,
   type User,
   type UpsertUser,
   type Store,
@@ -14,6 +15,8 @@ import {
   type InsertStoreVisit,
   type PasskeyCredential,
   type InsertPasskeyCredential,
+  type CoinTransaction,
+  type InsertCoinTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -49,6 +52,12 @@ export interface IStorage {
   getPasskeyCredential(id: string): Promise<PasskeyCredential | undefined>;
   createPasskeyCredential(credential: InsertPasskeyCredential): Promise<PasskeyCredential>;
   updatePasskeyCounter(id: string, counter: number): Promise<void>;
+  
+  // Coin transaction operations
+  getCoinTransactions(userId: string): Promise<CoinTransaction[]>;
+  createCoinTransaction(transaction: InsertCoinTransaction): Promise<CoinTransaction>;
+  transferCoins(fromUserId: string, toUserId: string, amount: number, message?: string): Promise<CoinTransaction>;
+  getCoinBalance(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -204,6 +213,72 @@ export class DatabaseStorage implements IStorage {
       .update(passkeyCredentials)
       .set({ counter })
       .where(eq(passkeyCredentials.id, id));
+  }
+  
+  // Coin transaction operations
+  async getCoinTransactions(userId: string): Promise<CoinTransaction[]> {
+    return await db
+      .select()
+      .from(coinTransactions)
+      .where(
+        and(
+          eq(coinTransactions.toUserId, userId),
+          eq(coinTransactions.status, "completed")
+        )
+      )
+      .orderBy(desc(coinTransactions.createdAt))
+      .limit(50);
+  }
+
+  async createCoinTransaction(transactionData: InsertCoinTransaction): Promise<CoinTransaction> {
+    const [transaction] = await db
+      .insert(coinTransactions)
+      .values(transactionData)
+      .returning();
+    return transaction;
+  }
+
+  async transferCoins(fromUserId: string, toUserId: string, amount: number, message?: string): Promise<CoinTransaction> {
+    // Check if sender has enough coins
+    const fromUser = await this.getUser(fromUserId);
+    if (!fromUser || (fromUser.coins || 0) < amount) {
+      throw new Error('コインが不足しています');
+    }
+
+    // Check if recipient exists
+    const toUser = await this.getUser(toUserId);
+    if (!toUser) {
+      throw new Error('送信先のユーザーが見つかりません');
+    }
+
+    // Deduct coins from sender
+    await db
+      .update(users)
+      .set({ coins: (fromUser.coins || 0) - amount })
+      .where(eq(users.id, fromUserId));
+
+    // Add coins to recipient
+    await db
+      .update(users)
+      .set({ coins: (toUser.coins || 0) + amount })
+      .where(eq(users.id, toUserId));
+
+    // Create transaction record
+    const transaction = await this.createCoinTransaction({
+      fromUserId,
+      toUserId,
+      amount,
+      message,
+      status: "completed",
+      type: "transfer",
+    });
+
+    return transaction;
+  }
+
+  async getCoinBalance(userId: string): Promise<number> {
+    const user = await this.getUser(userId);
+    return user?.coins || 0;
   }
 }
 

@@ -298,6 +298,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Store QR code generation
+  app.get("/api/stores/:id/qr", isAuthenticated, async (req, res) => {
+    try {
+      const stores = await storage.getStores();
+      const store = stores.find(s => s.id === req.params.id);
+      
+      if (!store) {
+        return res.status(404).json({ message: "Store not found" });
+      }
+
+      const qrCode = await QRCode.toDataURL(store.qrCode);
+      res.json({ qrCode, storeName: store.name });
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      res.status(500).json({ message: "Failed to generate QR code" });
+    }
+  });
+
+  // Coin transfer routes
+  app.get("/api/coins/transactions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const transactions = await storage.getCoinTransactions(userId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching coin transactions:", error);
+      res.status(500).json({ message: "Failed to fetch coin transactions" });
+    }
+  });
+
+  app.post("/api/coins/transfer", isAuthenticated, async (req: any, res) => {
+    try {
+      const fromUserId = req.user.claims.sub;
+      const { toUserId, amount, message } = req.body;
+
+      if (!toUserId || !amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid transfer data" });
+      }
+
+      const transaction = await storage.transferCoins(fromUserId, toUserId, amount, message);
+      res.json({
+        success: true,
+        transaction,
+        message: `${amount}コインを送信しました`,
+      });
+    } catch (error) {
+      console.error("Error transferring coins:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/coins/balance", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const balance = await storage.getCoinBalance(userId);
+      res.json({ balance });
+    } catch (error) {
+      console.error("Error fetching coin balance:", error);
+      res.status(500).json({ message: "Failed to fetch coin balance" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
