@@ -33,7 +33,11 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  currentPoints: integer("current_points").default(0),
+  experiencePoints: integer("experience_points").default(0), // 経験値 (XP)
+  loyaltyPoints: integer("loyalty_points").default(0),       // ロイヤルティポイント
+  coins: integer("coins").default(100),                      // ゲーム内コイン (初期値100)
+  gems: integer("gems").default(0),                          // プレミアムジェム
+  level: integer("level").default(1),                        // レベル
   rank: varchar("rank").default("ブロンズ"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -45,7 +49,11 @@ export const stores = pgTable("stores", {
   name: varchar("name").notNull(),
   address: text("address"),
   qrCode: varchar("qr_code").unique().notNull(),
-  pointsPerVisit: integer("points_per_visit").default(50),
+  experiencePerVisit: integer("experience_per_visit").default(25),
+  loyaltyPerVisit: integer("loyalty_per_visit").default(50),
+  coinsPerVisit: integer("coins_per_visit").default(10),
+  gemsPerVisit: integer("gems_per_visit").default(1),
+  storeType: varchar("store_type").default("regular"), // regular, premium, special
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -54,8 +62,11 @@ export const pointTransactions = pgTable("point_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   storeId: varchar("store_id").references(() => stores.id),
-  points: integer("points").notNull(),
-  type: varchar("type").notNull(), // 'checkin', 'bonus', 'redeem'
+  experiencePoints: integer("experience_points").default(0),
+  loyaltyPoints: integer("loyalty_points").default(0),
+  coins: integer("coins").default(0),
+  gems: integer("gems").default(0),
+  type: varchar("type").notNull(), // 'checkin', 'bonus', 'redeem', 'level_up'
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -65,7 +76,12 @@ export const storeVisits = pgTable("store_visits", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   storeId: varchar("store_id").notNull().references(() => stores.id),
-  pointsEarned: integer("points_earned").default(0),
+  experienceEarned: integer("experience_earned").default(0),
+  loyaltyEarned: integer("loyalty_earned").default(0),
+  coinsEarned: integer("coins_earned").default(0),
+  gemsEarned: integer("gems_earned").default(0),
+  levelBefore: integer("level_before").default(1),
+  levelAfter: integer("level_after").default(1),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

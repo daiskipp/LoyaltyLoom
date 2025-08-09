@@ -18,16 +18,25 @@ interface User {
   firstName: string;
   lastName: string;
   profileImageUrl: string;
-  currentPoints: number;
+  experiencePoints: number;
+  loyaltyPoints: number;
+  coins: number;
+  gems: number;
+  level: number;
   rank: string;
 }
 
 interface Activity {
   id: string;
   type: string;
-  storeName: string;
+  storeName: string | null;
   description: string;
-  points: number;
+  rewards: {
+    experience: number;
+    loyalty: number;
+    coins: number;
+    gems: number;
+  };
   createdAt: string;
 }
 
@@ -37,7 +46,17 @@ export default function Home() {
   const queryClient = useQueryClient();
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [lastCheckin, setLastCheckin] = useState<{ storeName: string; points: number } | null>(null);
+  const [lastCheckin, setLastCheckin] = useState<{
+    storeName: string;
+    rewards: {
+      experience: number;
+      loyalty: number;
+      coins: number;
+      gems: number;
+    };
+    leveledUp?: boolean;
+    levelAfter?: number;
+  } | null>(null);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -91,7 +110,9 @@ export default function Home() {
       
       setLastCheckin({
         storeName: data.storeName,
-        points: data.pointsEarned,
+        rewards: data.rewards,
+        leveledUp: data.leveledUp,
+        levelAfter: data.levelAfter,
       });
       setShowSuccessToast(true);
       setShowQRScanner(false);
@@ -159,25 +180,36 @@ export default function Home() {
     );
   }
 
-  const currentPoints = userData.currentPoints || 0;
+  const experiencePoints = userData.experiencePoints || 0;
+  const loyaltyPoints = userData.loyaltyPoints || 0;
+  const coins = userData.coins || 0;
+  const gems = userData.gems || 0;
+  const level = userData.level || 1;
   const rank = userData.rank || 'ブロンズ';
   
-  // Calculate points to next rank
-  let pointsToNextRank = 0;
-  let progressPercentage = 0;
+  // Calculate experience to next level (100 XP per level)
+  const currentLevelXP = (level - 1) * 100;
+  const nextLevelXP = level * 100;
+  const xpInCurrentLevel = experiencePoints - currentLevelXP;
+  const xpNeededForNextLevel = nextLevelXP - experiencePoints;
+  const levelProgressPercentage = (xpInCurrentLevel / 100) * 100;
   
-  if (currentPoints < 500) {
-    pointsToNextRank = 500 - currentPoints;
-    progressPercentage = (currentPoints / 500) * 100;
-  } else if (currentPoints < 2000) {
-    pointsToNextRank = 2000 - currentPoints;
-    progressPercentage = ((currentPoints - 500) / 1500) * 100;
-  } else if (currentPoints < 5000) {
-    pointsToNextRank = 5000 - currentPoints;
-    progressPercentage = ((currentPoints - 2000) / 3000) * 100;
+  // Calculate loyalty points to next rank
+  let loyaltyToNextRank = 0;
+  let rankProgressPercentage = 0;
+  
+  if (loyaltyPoints < 1000) {
+    loyaltyToNextRank = 1000 - loyaltyPoints;
+    rankProgressPercentage = (loyaltyPoints / 1000) * 100;
+  } else if (loyaltyPoints < 5000) {
+    loyaltyToNextRank = 5000 - loyaltyPoints;
+    rankProgressPercentage = ((loyaltyPoints - 1000) / 4000) * 100;
+  } else if (loyaltyPoints < 10000) {
+    loyaltyToNextRank = 10000 - loyaltyPoints;
+    rankProgressPercentage = ((loyaltyPoints - 5000) / 5000) * 100;
   } else {
-    pointsToNextRank = 0;
-    progressPercentage = 100;
+    loyaltyToNextRank = 0;
+    rankProgressPercentage = 100;
   }
 
   const handleQRScan = (code: string) => {
@@ -189,32 +221,77 @@ export default function Home() {
       <Header />
       
       <main className="max-w-md mx-auto px-6 pb-24">
-        {/* Points Card */}
-        <div className="bg-gradient-to-br from-primary to-blue-600 rounded-2xl p-8 mb-6 mt-6 shadow-lg text-white">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-xl opacity-90 mb-2">現在のポイント</p>
-              <p className="text-4xl font-bold">{currentPoints.toLocaleString()}</p>
-              <p className="text-base opacity-90 mt-1">ポイント</p>
-            </div>
-            <div className="text-right">
-              <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mb-2">
-                <Crown className="text-3xl text-yellow-300 w-8 h-8" />
+        {/* RPG-Style Stats Cards */}
+        <div className="space-y-4 mb-6 mt-6">
+          {/* Level and Experience Card */}
+          <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-lg text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-lg opacity-90 mb-1">レベル</p>
+                <p className="text-3xl font-bold">{level}</p>
               </div>
-              <p className="text-lg font-semibold">{rank}</p>
+              <div className="text-right">
+                <p className="text-sm opacity-90">経験値</p>
+                <p className="text-xl font-bold">{experiencePoints.toLocaleString()}</p>
+              </div>
+            </div>
+            
+            {xpNeededForNextLevel > 0 && (
+              <div className="bg-white bg-opacity-20 rounded-xl p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm">次のレベルまで</span>
+                  <span className="text-sm font-semibold">{xpNeededForNextLevel} XP</span>
+                </div>
+                <div className="w-full bg-white bg-opacity-30 rounded-full h-2">
+                  <div 
+                    className="bg-yellow-400 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${levelProgressPercentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Currency Grid */}
+          <div className="grid grid-cols-3 gap-3">
+            {/* Loyalty Points */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white text-center">
+              <Crown className="w-6 h-6 mx-auto mb-2 text-yellow-300" />
+              <p className="text-xs opacity-90 mb-1">ロイヤル</p>
+              <p className="text-lg font-bold">{loyaltyPoints.toLocaleString()}</p>
+              <p className="text-xs opacity-90">{rank}</p>
+            </div>
+            
+            {/* Coins */}
+            <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-4 text-white text-center">
+              <div className="w-6 h-6 mx-auto mb-2 bg-yellow-300 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-yellow-800">¥</span>
+              </div>
+              <p className="text-xs opacity-90 mb-1">コイン</p>
+              <p className="text-lg font-bold">{coins.toLocaleString()}</p>
+            </div>
+            
+            {/* Gems */}
+            <div className="bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl p-4 text-white text-center">
+              <div className="w-6 h-6 mx-auto mb-2 bg-pink-300 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-pink-800">💎</span>
+              </div>
+              <p className="text-xs opacity-90 mb-1">ジェム</p>
+              <p className="text-lg font-bold">{gems.toLocaleString()}</p>
             </div>
           </div>
-          
-          {pointsToNextRank > 0 && (
-            <div className="bg-white bg-opacity-20 rounded-xl p-4">
+
+          {/* Rank Progress */}
+          {loyaltyToNextRank > 0 && (
+            <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-4 text-white">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-base">次のランクまで</span>
-                <span className="text-lg font-semibold">{pointsToNextRank}pt</span>
+                <span className="text-sm">次のランクまで</span>
+                <span className="text-sm font-semibold">{loyaltyToNextRank} ロイヤル</span>
               </div>
-              <div className="w-full bg-white bg-opacity-30 rounded-full h-3">
+              <div className="w-full bg-white bg-opacity-20 rounded-full h-2">
                 <div 
-                  className="bg-accent h-3 rounded-full transition-all duration-500" 
-                  style={{ width: `${progressPercentage}%` }}
+                  className="bg-blue-400 h-2 rounded-full transition-all duration-500" 
+                  style={{ width: `${rankProgressPercentage}%` }}
                 ></div>
               </div>
             </div>
@@ -319,10 +396,27 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-success">
-                        +{activity.points}pt
-                      </p>
+                    <div className="text-right space-y-1">
+                      {activity.rewards.experience > 0 && (
+                        <p className="text-sm font-bold text-purple-600">
+                          +{activity.rewards.experience} XP
+                        </p>
+                      )}
+                      {activity.rewards.loyalty > 0 && (
+                        <p className="text-sm font-bold text-blue-600">
+                          +{activity.rewards.loyalty} LP
+                        </p>
+                      )}
+                      {activity.rewards.coins > 0 && (
+                        <p className="text-sm font-bold text-orange-600">
+                          +{activity.rewards.coins} コイン
+                        </p>
+                      )}
+                      {activity.rewards.gems > 0 && (
+                        <p className="text-sm font-bold text-pink-600">
+                          +{activity.rewards.gems} ジェム
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

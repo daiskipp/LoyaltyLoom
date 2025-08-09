@@ -23,7 +23,12 @@ export interface IStorage {
   // User operations (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  updateUserPoints(userId: string, points: number): Promise<User>;
+  updateUserPoints(userId: string, pointsReward: { 
+    experience?: number; 
+    loyalty?: number; 
+    coins?: number; 
+    gems?: number; 
+  }): Promise<User>;
   updateUserProfile(userId: string, profileData: { firstName?: string; lastName?: string }): Promise<User>;
   
   // Store operations
@@ -68,28 +73,37 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUserPoints(userId: string, points: number): Promise<User> {
+  async updateUserPoints(userId: string, pointsReward: { 
+    experience?: number; 
+    loyalty?: number; 
+    coins?: number; 
+    gems?: number; 
+  }): Promise<User> {
     const user = await this.getUser(userId);
     if (!user) throw new Error('User not found');
     
-    const newPoints = (user.currentPoints || 0) + points;
-    let newRank = user.rank || 'ブロンズ';
+    const newExperience = (user.experiencePoints || 0) + (pointsReward.experience || 0);
+    const newLoyalty = (user.loyaltyPoints || 0) + (pointsReward.loyalty || 0);
+    const newCoins = (user.coins || 0) + (pointsReward.coins || 0);
+    const newGems = (user.gems || 0) + (pointsReward.gems || 0);
     
-    // Update rank based on points
-    if (newPoints >= 5000) {
-      newRank = 'プラチナ';
-    } else if (newPoints >= 2000) {
-      newRank = 'ゴールド';
-    } else if (newPoints >= 500) {
-      newRank = 'シルバー';
-    } else {
-      newRank = 'ブロンズ';
-    }
+    // Calculate level (100 XP per level)
+    const newLevel = Math.floor(newExperience / 100) + 1;
+    
+    // Calculate rank based on loyalty points
+    let newRank = "ブロンズ";
+    if (newLoyalty >= 10000) newRank = "プラチナ";
+    else if (newLoyalty >= 5000) newRank = "ゴールド"; 
+    else if (newLoyalty >= 1000) newRank = "シルバー";
     
     const [updatedUser] = await db
       .update(users)
-      .set({ 
-        currentPoints: newPoints,
+      .set({
+        experiencePoints: newExperience,
+        loyaltyPoints: newLoyalty,
+        coins: newCoins,
+        gems: newGems,
+        level: newLevel,
         rank: newRank,
         updatedAt: new Date(),
       })

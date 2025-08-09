@@ -108,32 +108,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Invalid QR code" });
       }
       
-      const pointsEarned = store.pointsPerVisit || 50;
+      const experienceEarned = store.experiencePerVisit || 25;
+      const loyaltyEarned = store.loyaltyPerVisit || 50;
+      const coinsEarned = store.coinsPerVisit || 10;
+      const gemsEarned = store.gemsPerVisit || 1;
+      
+      // Get user's current level for tracking
+      const currentUser = await storage.getUser(userId);
+      const levelBefore = currentUser?.level || 1;
+      
+      // Update user points
+      const updatedUser = await storage.updateUserPoints(userId, {
+        experience: experienceEarned,
+        loyalty: loyaltyEarned,
+        coins: coinsEarned,
+        gems: gemsEarned,
+      });
+      
+      const levelAfter = updatedUser.level || 1;
+      const leveledUp = levelAfter > levelBefore;
       
       // Create store visit
       const visit = await storage.createStoreVisit({
         userId,
         storeId: store.id,
-        pointsEarned,
+        experienceEarned,
+        loyaltyEarned,
+        coinsEarned,
+        gemsEarned,
+        levelBefore,
+        levelAfter,
       });
       
       // Create point transaction
       const transaction = await storage.createPointTransaction({
         userId,
         storeId: store.id,
-        points: pointsEarned,
+        experiencePoints: experienceEarned,
+        loyaltyPoints: loyaltyEarned,
+        coins: coinsEarned,
+        gems: gemsEarned,
         type: 'checkin',
         description: `${store.name}でのチェックイン`,
       });
-      
-      // Update user points
-      const updatedUser = await storage.updateUserPoints(userId, pointsEarned);
       
       res.json({
         visit,
         transaction,
         user: updatedUser,
-        pointsEarned,
+        rewards: {
+          experience: experienceEarned,
+          loyalty: loyaltyEarned,
+          coins: coinsEarned,
+          gems: gemsEarned,
+        },
+        leveledUp,
+        levelBefore,
+        levelAfter,
         storeName: store.name,
       });
     } catch (error) {
@@ -184,7 +215,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'transaction',
         storeName: t.storeId ? storeMap.get(t.storeId)?.name : null,
         description: t.description,
-        points: t.points,
+        rewards: {
+          experience: t.experiencePoints || 0,
+          loyalty: t.loyaltyPoints || 0,
+          coins: t.coins || 0,
+          gems: t.gems || 0,
+        },
         createdAt: t.createdAt,
       }));
       
@@ -203,25 +239,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const stores = await storage.getStores();
       if (stores.length === 0) {
-        // Create demo stores
+        // Create RPG-style demo stores
         const demoStores = [
           {
             name: "カフェ・ドリーム",
             address: "東京都渋谷区1-1-1",
             qrCode: "test-store-qr-code-123",
-            pointsPerVisit: 50,
+            experiencePerVisit: 25,
+            loyaltyPerVisit: 50,
+            coinsPerVisit: 10,
+            gemsPerVisit: 1,
+            storeType: "regular",
           },
           {
             name: "ブックストア本の森",
             address: "東京都新宿区2-2-2", 
             qrCode: "bookstore-qr-456",
-            pointsPerVisit: 30,
+            experiencePerVisit: 30,
+            loyaltyPerVisit: 40,
+            coinsPerVisit: 15,
+            gemsPerVisit: 1,
+            storeType: "premium",
           },
           {
             name: "レストラン味楽",
             address: "東京都港区3-3-3",
             qrCode: "restaurant-qr-789",
-            pointsPerVisit: 100,
+            experiencePerVisit: 50,
+            loyaltyPerVisit: 100,
+            coinsPerVisit: 25,
+            gemsPerVisit: 3,
+            storeType: "special",
           }
         ];
         
