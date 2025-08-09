@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
 import { ArrowLeft, Store, QrCode, Heart, HeartOff, MapPin, Award, Phone, Globe, Clock, ExternalLink } from "lucide-react";
+import { FaInstagram, FaTwitter, FaFacebook, FaLine } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,10 @@ interface Store {
   phoneNumber?: string;
   website?: string;
   businessHours?: string;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  facebookUrl?: string;
+  lineUrl?: string;
   storeType: string;
   experiencePerVisit: number;
   loyaltyPerVisit: number;
@@ -404,6 +409,59 @@ export default function StoreDetail() {
                       >
                         公式サイトを見る
                       </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* SNS Links */}
+                {(store.instagramUrl || store.twitterUrl || store.facebookUrl || store.lineUrl) && (
+                  <div>
+                    <p className="font-medium text-gray-900 mb-3">SNS・公式アカウント</p>
+                    <div className="flex flex-wrap gap-3">
+                      {store.instagramUrl && (
+                        <a
+                          href={store.instagramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all"
+                        >
+                          <FaInstagram className="w-4 h-4" />
+                          <span className="text-sm font-medium">Instagram</span>
+                        </a>
+                      )}
+                      {store.twitterUrl && (
+                        <a
+                          href={store.twitterUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all"
+                        >
+                          <FaTwitter className="w-4 h-4" />
+                          <span className="text-sm font-medium">Twitter</span>
+                        </a>
+                      )}
+                      {store.facebookUrl && (
+                        <a
+                          href={store.facebookUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-all"
+                        >
+                          <FaFacebook className="w-4 h-4" />
+                          <span className="text-sm font-medium">Facebook</span>
+                        </a>
+                      )}
+                      {store.lineUrl && (
+                        <a
+                          href={store.lineUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+                        >
+                          <FaLine className="w-4 h-4" />
+                          <span className="text-sm font-medium">LINE公式</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}

@@ -59,6 +59,10 @@ export const stores = pgTable("stores", {
   phoneNumber: varchar("phone_number"), // 電話番号
   website: varchar("website"), // ウェブサイトURL
   businessHours: text("business_hours"), // 営業時間
+  instagramUrl: varchar("instagram_url"), // Instagram URL
+  twitterUrl: varchar("twitter_url"), // Twitter URL
+  facebookUrl: varchar("facebook_url"), // Facebook URL
+  lineUrl: varchar("line_url"), // LINE URL
   qrCode: varchar("qr_code").unique().notNull(),
   experiencePerVisit: integer("experience_per_visit").default(25),
   loyaltyPerVisit: integer("loyalty_per_visit").default(50),
