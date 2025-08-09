@@ -455,6 +455,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // NFT routes
+  app.get("/api/nfts/my", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userNfts = await storage.getUserNfts(userId);
+      res.json(userNfts);
+    } catch (error) {
+      console.error("Error fetching user NFTs:", error);
+      res.status(500).json({ message: "Failed to fetch NFTs" });
+    }
+  });
+
+  app.get("/api/nfts", isAuthenticated, async (req: any, res) => {
+    try {
+      const nfts = await storage.getAllNfts();
+      res.json(nfts);
+    } catch (error) {
+      console.error("Error fetching NFTs:", error);
+      res.status(500).json({ message: "Failed to fetch NFTs" });
+    }
+  });
+
+  app.post("/api/nfts", isAuthenticated, async (req: any, res) => {
+    try {
+      const { name, description, imageUrl, category, rarity } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ message: "NFT name is required" });
+      }
+
+      const nft = await storage.createNft({
+        name,
+        description,
+        imageUrl,
+        category: category || "event",
+        rarity: rarity || "common",
+      });
+
+      res.json({
+        success: true,
+        nft,
+        message: "NFTを作成しました",
+      });
+    } catch (error) {
+      console.error("Error creating NFT:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/nfts/:id/award", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id: nftId } = req.params;
+      const { reason, metadata } = req.body;
+      const userId = req.user.claims.sub;
+
+      const userNft = await storage.awardNftToUser(userId, nftId, reason, metadata);
+
+      res.json({
+        success: true,
+        userNft,
+        message: "NFTを獲得しました！",
+      });
+    } catch (error) {
+      console.error("Error awarding NFT:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

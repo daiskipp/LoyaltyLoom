@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
-import { Crown, Plus, Gift, QrCode, History, User, Coins } from "lucide-react";
+import { Crown, Plus, Gift, QrCode, History, User, Coins, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -331,6 +331,22 @@ export default function Home() {
 
         {/* Secondary Actions */}
         <div className="grid grid-cols-1 gap-4 mb-8">
+          <Button
+            onClick={() => window.location.href = "/nft-collection"}
+            className="bg-white hover:bg-gray-50 border-2 border-gray-100 hover:border-purple-600 text-text rounded-2xl p-4 h-auto flex items-center justify-between transition-colors shadow-sm touch-target"
+            variant="outline"
+          >
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mr-4">
+                <Award className="text-white w-6 h-6" />
+              </div>
+              <div className="text-left">
+                <p className="text-lg font-semibold">NFTコレクション</p>
+                <p className="text-sm text-gray-600">獲得したNFTを確認</p>
+              </div>
+            </div>
+          </Button>
+
           <Button
             onClick={() => window.location.href = "/history"}
             className="bg-white hover:bg-gray-50 border-2 border-gray-100 hover:border-primary text-text rounded-2xl p-4 h-auto flex items-center justify-between transition-colors shadow-sm touch-target"

@@ -102,6 +102,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   sentCoinTransactions: many(coinTransactions, { relationName: "sentTransactions" }),
   receivedCoinTransactions: many(coinTransactions, { relationName: "receivedTransactions" }),
   addressBookEntries: many(addressBook, { relationName: "addressBookEntries" }),
+  nfts: many(userNfts),
 }));
 
 export const storesRelations = relations(stores, ({ many }) => ({
@@ -190,6 +191,28 @@ export const addressBook = pgTable("address_book", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// NFT collection
+export const nftCollection = pgTable("nft_collection", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  category: varchar("category").notNull().default("event"), // event, levelup, achievement, special
+  rarity: varchar("rarity").notNull().default("common"), // common, rare, epic, legendary
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User NFT ownership
+export const userNfts = pgTable("user_nfts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  nftId: varchar("nft_id").notNull().references(() => nftCollection.id),
+  obtainedAt: timestamp("obtained_at").defaultNow(),
+  obtainedReason: varchar("obtained_reason"), // "level_up", "event_participation", "achievement", etc.
+  metadata: text("metadata"), // JSON string for additional data
+});
+
 export const coinTransactionsRelations = relations(coinTransactions, ({ one }) => ({
   fromUser: one(users, {
     fields: [coinTransactions.fromUserId],
@@ -216,12 +239,31 @@ export const addressBookRelations = relations(addressBook, ({ one }) => ({
   }),
 }));
 
+export const nftCollectionRelations = relations(nftCollection, ({ many }) => ({
+  userNfts: many(userNfts),
+}));
+
+export const userNftsRelations = relations(userNfts, ({ one }) => ({
+  user: one(users, {
+    fields: [userNfts.userId],
+    references: [users.id],
+  }),
+  nft: one(nftCollection, {
+    fields: [userNfts.nftId],
+    references: [nftCollection.id],
+  }),
+}));
+
 
 
 export type CoinTransaction = typeof coinTransactions.$inferSelect;
 export type InsertCoinTransaction = typeof coinTransactions.$inferInsert;
 export type AddressBookEntry = typeof addressBook.$inferSelect;
 export type InsertAddressBookEntry = typeof addressBook.$inferInsert;
+export type NftCollection = typeof nftCollection.$inferSelect;
+export type InsertNftCollection = typeof nftCollection.$inferInsert;
+export type UserNft = typeof userNfts.$inferSelect;
+export type InsertUserNft = typeof userNfts.$inferInsert;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Store = typeof stores.$inferSelect;

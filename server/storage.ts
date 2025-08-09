@@ -6,6 +6,8 @@ import {
   passkeyCredentials,
   coinTransactions,
   addressBook,
+  nftCollection,
+  userNfts,
   type User,
   type UpsertUser,
   type Store,
@@ -20,9 +22,13 @@ import {
   type InsertCoinTransaction,
   type AddressBookEntry,
   type InsertAddressBookEntry,
+  type NftCollection,
+  type InsertNftCollection,
+  type UserNft,
+  type InsertUserNft,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -68,6 +74,13 @@ export interface IStorage {
   updateAddressBookEntry(id: string, updates: Partial<InsertAddressBookEntry>): Promise<AddressBookEntry>;
   removeFromAddressBook(id: string): Promise<void>;
   findAddressBookEntry(userId: string, recipientId: string): Promise<AddressBookEntry | undefined>;
+  
+  // NFT operations
+  getUserNfts(userId: string): Promise<(UserNft & { nft: NftCollection })[]>;
+  getAllNfts(): Promise<NftCollection[]>;
+  createNft(nft: InsertNftCollection): Promise<NftCollection>;
+  awardNftToUser(userId: string, nftId: string, reason?: string, metadata?: any): Promise<UserNft>;
+  getUserNftCount(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -343,6 +356,80 @@ export class DatabaseStorage implements IStorage {
         )
       );
     return entry;
+  }
+
+  // NFT operations
+  async getUserNfts(userId: string): Promise<(UserNft & { nft: NftCollection })[]> {
+    const results = await db
+      .select({
+        id: userNfts.id,
+        userId: userNfts.userId,
+        nftId: userNfts.nftId,
+        obtainedAt: userNfts.obtainedAt,
+        obtainedReason: userNfts.obtainedReason,
+        metadata: userNfts.metadata,
+        nft: {
+          id: nftCollection.id,
+          name: nftCollection.name,
+          description: nftCollection.description,
+          imageUrl: nftCollection.imageUrl,
+          category: nftCollection.category,
+          rarity: nftCollection.rarity,
+          isActive: nftCollection.isActive,
+          createdAt: nftCollection.createdAt,
+        }
+      })
+      .from(userNfts)
+      .innerJoin(nftCollection, eq(userNfts.nftId, nftCollection.id))
+      .where(eq(userNfts.userId, userId))
+      .orderBy(desc(userNfts.obtainedAt));
+
+    return results.map(result => ({
+      id: result.id,
+      userId: result.userId,
+      nftId: result.nftId,
+      obtainedAt: result.obtainedAt,
+      obtainedReason: result.obtainedReason,
+      metadata: result.metadata,
+      nft: result.nft
+    }));
+  }
+
+  async getAllNfts(): Promise<NftCollection[]> {
+    return await db
+      .select()
+      .from(nftCollection)
+      .where(eq(nftCollection.isActive, true))
+      .orderBy(desc(nftCollection.createdAt));
+  }
+
+  async createNft(nftData: InsertNftCollection): Promise<NftCollection> {
+    const [nft] = await db
+      .insert(nftCollection)
+      .values(nftData)
+      .returning();
+    return nft;
+  }
+
+  async awardNftToUser(userId: string, nftId: string, reason?: string, metadata?: any): Promise<UserNft> {
+    const [userNft] = await db
+      .insert(userNfts)
+      .values({
+        userId,
+        nftId,
+        obtainedReason: reason,
+        metadata: metadata ? JSON.stringify(metadata) : null,
+      })
+      .returning();
+    return userNft;
+  }
+
+  async getUserNftCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(userNfts)
+      .where(eq(userNfts.userId, userId));
+    return result[0]?.count || 0;
   }
 }
 
