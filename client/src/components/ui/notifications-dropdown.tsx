@@ -63,13 +63,13 @@ export default function NotificationsDropdown() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case "success":
-        return "text-green-600 bg-green-50";
+        return "text-gray-600 bg-gray-100";
       case "warning":
-        return "text-orange-600 bg-orange-50";
+        return "text-gray-600 bg-gray-100";
       case "error":
-        return "text-red-600 bg-red-50";
+        return "text-gray-600 bg-gray-100";
       default:
-        return "text-blue-600 bg-blue-50";
+        return "text-gray-600 bg-gray-100";
     }
   };
 
@@ -129,7 +129,7 @@ export default function NotificationsDropdown() {
               <DropdownMenuItem
                 key={notification.id}
                 className={`p-4 cursor-pointer focus:bg-gray-50 ${
-                  !notification.isRead ? "bg-blue-50 border-l-4 border-blue-500" : ""
+                  !notification.isRead ? "bg-gray-50 border-l-2 border-gray-400" : ""
                 }`}
                 onClick={() => {
                   if (!notification.isRead) {
@@ -140,7 +140,7 @@ export default function NotificationsDropdown() {
                 <div className="w-full">
                   <div className="flex items-start justify-between mb-1">
                     <h4 className={`font-semibold text-sm ${
-                      !notification.isRead ? "text-blue-900" : "text-gray-900"
+                      !notification.isRead ? "text-gray-900" : "text-gray-700"
                     }`}>
                       {notification.title}
                     </h4>
@@ -149,12 +149,12 @@ export default function NotificationsDropdown() {
                         {getTypeLabel(notification.type)}
                       </span>
                       {!notification.isRead && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                       )}
                     </div>
                   </div>
                   <p className={`text-sm leading-relaxed mb-2 ${
-                    !notification.isRead ? "text-blue-800" : "text-gray-600"
+                    !notification.isRead ? "text-gray-700" : "text-gray-600"
                   }`}>
                     {notification.message}
                   </p>
