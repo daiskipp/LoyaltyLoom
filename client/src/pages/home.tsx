@@ -224,64 +224,57 @@ export default function Home() {
         {/* RPG-Style Stats Cards */}
         <div className="space-y-4 mb-6 mt-6">
           {/* Membership Card */}
-          <div className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl p-6 shadow-2xl text-white overflow-hidden">
-            {/* Card Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-4 right-4 w-20 h-20 border-2 border-white rounded-full"></div>
-              <div className="absolute bottom-4 left-4 w-16 h-16 border-2 border-white rounded-full"></div>
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-white rounded-full"></div>
-            </div>
-            
+          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
             {/* Card Header */}
-            <div className="relative z-10 flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xs font-semibold tracking-widest uppercase opacity-80 mb-1">MEMBER CARD</h3>
-                <h2 className="text-lg font-bold">ロイヤルティ会員証</h2>
+                <h3 className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-1">MEMBER CARD</h3>
+                <h2 className="text-lg font-bold text-gray-900">ロイヤルティ会員証</h2>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                <Crown className="w-6 h-6 text-yellow-900" />
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Crown className="w-6 h-6 text-gray-600" />
               </div>
             </div>
             
             {/* Member Info */}
-            <div className="relative z-10 mb-6">
+            <div className="mb-6">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-2xl font-bold">
+                <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-2xl font-bold text-gray-700">
                   {userData.nickname ? userData.nickname.charAt(0).toUpperCase() : 'G'}
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold">{userData.nickname || 'ゲスト'}</h3>
-                  <p className="text-sm opacity-80">{userData.userId ? `@${userData.userId}` : 'ID未設定'}</p>
+                  <h3 className="text-lg font-bold text-gray-900">{userData.nickname || 'ゲスト'}</h3>
+                  <p className="text-sm text-gray-600">{userData.userId ? `@${userData.userId}` : 'ID未設定'}</p>
                 </div>
               </div>
             </div>
             
             {/* Stats Grid */}
-            <div className="relative z-10 grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-yellow-400">{level}</p>
-                <p className="text-xs uppercase tracking-wide opacity-80">レベル</p>
+                <p className="text-2xl font-bold text-gray-900">{level}</p>
+                <p className="text-xs uppercase tracking-wide text-gray-500">レベル</p>
               </div>
-              <div className="text-center border-x border-white border-opacity-20">
-                <p className="text-lg font-bold text-blue-400">{loyaltyPoints.toLocaleString()}</p>
-                <p className="text-xs uppercase tracking-wide opacity-80">ポイント</p>
+              <div className="text-center border-x border-gray-200">
+                <p className="text-lg font-bold text-gray-900">{loyaltyPoints.toLocaleString()}</p>
+                <p className="text-xs uppercase tracking-wide text-gray-500">ポイント</p>
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-purple-400">{rank}</p>
-                <p className="text-xs uppercase tracking-wide opacity-80">ランク</p>
+                <p className="text-lg font-bold text-gray-900">{rank}</p>
+                <p className="text-xs uppercase tracking-wide text-gray-500">ランク</p>
               </div>
             </div>
             
             {/* Progress Bar */}
             {xpNeededForNextLevel > 0 && (
-              <div className="relative z-10 bg-white bg-opacity-10 rounded-full p-1">
-                <div className="flex justify-between items-center mb-1 px-2">
-                  <span className="text-xs">次のレベルまで</span>
-                  <span className="text-xs font-semibold">{xpNeededForNextLevel} XP</span>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs text-gray-600">次のレベルまで</span>
+                  <span className="text-xs font-semibold text-gray-900">{xpNeededForNextLevel} XP</span>
                 </div>
-                <div className="w-full bg-black bg-opacity-30 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-2 rounded-full transition-all duration-500" 
+                    className="bg-gray-900 h-2 rounded-full transition-all duration-500" 
                     style={{ width: `${levelProgressPercentage}%` }}
                   ></div>
                 </div>
@@ -289,51 +282,52 @@ export default function Home() {
             )}
             
             {/* Card Number */}
-            <div className="relative z-10 mt-4 pt-4 border-t border-white border-opacity-20">
-              <p className="text-xs opacity-60 tracking-widest">CARD NO.</p>
-              <p className="text-sm font-mono">**** **** **** {userData.id?.slice(-4) || '0000'}</p>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-400 tracking-widest">CARD NO.</p>
+              <p className="text-sm font-mono text-gray-600">**** **** **** {userData.id?.slice(-4) || '0000'}</p>
             </div>
           </div>
 
           {/* Currency Grid */}
           <div className="grid grid-cols-3 gap-3">
-            {/* Loyalty Points */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white text-center">
-              <Crown className="w-6 h-6 mx-auto mb-2 text-yellow-300" />
-              <p className="text-xs opacity-90 mb-1">ロイヤル</p>
-              <p className="text-lg font-bold">{loyaltyPoints.toLocaleString()}</p>
-              <p className="text-xs opacity-90">{rank}</p>
-            </div>
-            
             {/* Coins */}
-            <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-4 text-white text-center">
-              <div className="w-6 h-6 mx-auto mb-2 bg-yellow-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-yellow-800">¥</span>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <div className="w-6 h-6 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-gray-600">¥</span>
               </div>
-              <p className="text-xs opacity-90 mb-1">コイン</p>
-              <p className="text-lg font-bold">{coins.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mb-1">コイン</p>
+              <p className="text-lg font-bold text-gray-900">{coins.toLocaleString()}</p>
             </div>
             
             {/* Gems */}
-            <div className="bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl p-4 text-white text-center">
-              <div className="w-6 h-6 mx-auto mb-2 bg-pink-300 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-pink-800">💎</span>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <div className="w-6 h-6 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-gray-600">💎</span>
               </div>
-              <p className="text-xs opacity-90 mb-1">ジェム</p>
-              <p className="text-lg font-bold">{gems.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mb-1">ジェム</p>
+              <p className="text-lg font-bold text-gray-900">{gems.toLocaleString()}</p>
+            </div>
+            
+            {/* Experience */}
+            <div className="bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+              <div className="w-6 h-6 mx-auto mb-2 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-gray-600">EXP</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-1">経験値</p>
+              <p className="text-lg font-bold text-gray-900">{experiencePoints.toLocaleString()}</p>
             </div>
           </div>
 
           {/* Rank Progress */}
           {loyaltyToNextRank > 0 && (
-            <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-4 text-white">
+            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm">次のランクまで</span>
-                <span className="text-sm font-semibold">{loyaltyToNextRank} ロイヤル</span>
+                <span className="text-sm text-gray-600">次のランクまで</span>
+                <span className="text-sm font-semibold text-gray-900">{loyaltyToNextRank} ロイヤル</span>
               </div>
-              <div className="w-full bg-white bg-opacity-20 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className="bg-blue-400 h-2 rounded-full transition-all duration-500" 
+                  className="bg-gray-900 h-2 rounded-full transition-all duration-500" 
                   style={{ width: `${rankProgressPercentage}%` }}
                 ></div>
               </div>
@@ -348,7 +342,7 @@ export default function Home() {
             className="bg-white hover:bg-gray-50 border-2 border-gray-100 hover:border-primary text-text rounded-2xl p-6 h-auto flex flex-col items-center space-y-3 transition-colors shadow-sm touch-target"
             variant="outline"
           >
-            <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-gray-900 rounded-full flex items-center justify-center">
               <QrCode className="text-white w-8 h-8" />
             </div>
             <div className="text-center">
@@ -362,7 +356,7 @@ export default function Home() {
             className="bg-white hover:bg-gray-50 border-2 border-gray-100 hover:border-orange-600 text-text rounded-2xl p-6 h-auto flex flex-col items-center space-y-3 transition-colors shadow-sm touch-target"
             variant="outline"
           >
-            <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
               <Coins className="text-white w-8 h-8" />
             </div>
             <div className="text-center">
@@ -380,7 +374,7 @@ export default function Home() {
             variant="outline"
           >
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mr-4">
                 <Award className="text-white w-6 h-6" />
               </div>
               <div className="text-left">
@@ -396,7 +390,7 @@ export default function Home() {
             variant="outline"
           >
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mr-4">
+              <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mr-4">
                 <History className="text-white w-6 h-6" />
               </div>
               <div className="text-left">
@@ -423,7 +417,7 @@ export default function Home() {
                   <Button
                     onClick={() => initDemoMutation.mutate()}
                     disabled={initDemoMutation.isPending}
-                    className="w-full button-senior bg-accent hover:bg-orange-600 text-white"
+                    className="w-full button-senior bg-gray-900 hover:bg-gray-800 text-white"
                   >
                     {initDemoMutation.isPending ? (
                       <>
@@ -437,7 +431,7 @@ export default function Home() {
                   <Button
                     onClick={() => window.location.href = "/demo-stores"}
                     variant="outline"
-                    className="w-full button-senior border-primary text-primary hover:bg-primary hover:text-white"
+                    className="w-full button-senior border-gray-600 text-gray-600 hover:bg-gray-600 hover:text-white"
                   >
                     デモストア一覧
                   </Button>
@@ -453,7 +447,7 @@ export default function Home() {
                 <Card key={activity.id} className="card-senior">
                   <CardContent className="flex items-start justify-between">
                     <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-success rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <Plus className="text-white w-5 h-5" />
                       </div>
                       <div className="flex-1">
@@ -476,22 +470,22 @@ export default function Home() {
                     </div>
                     <div className="text-right space-y-1">
                       {activity.rewards.experience > 0 && (
-                        <p className="text-sm font-bold text-purple-600">
+                        <p className="text-sm font-bold text-gray-700">
                           +{activity.rewards.experience} XP
                         </p>
                       )}
                       {activity.rewards.loyalty > 0 && (
-                        <p className="text-sm font-bold text-blue-600">
+                        <p className="text-sm font-bold text-gray-700">
                           +{activity.rewards.loyalty} LP
                         </p>
                       )}
                       {activity.rewards.coins > 0 && (
-                        <p className="text-sm font-bold text-orange-600">
+                        <p className="text-sm font-bold text-gray-700">
                           +{activity.rewards.coins} コイン
                         </p>
                       )}
                       {activity.rewards.gems > 0 && (
-                        <p className="text-sm font-bold text-pink-600">
+                        <p className="text-sm font-bold text-gray-700">
                           +{activity.rewards.gems} ジェム
                         </p>
                       )}
@@ -505,24 +499,24 @@ export default function Home() {
 
         {/* Rank Benefits */}
         {rank === 'ゴールド' && (
-          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6 mb-8">
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 mb-8">
             <div className="flex items-center mb-4">
-              <Crown className="text-accent w-6 h-6 mr-3" />
-              <h3 className="text-xl font-bold text-text">ゴールド特典</h3>
+              <Crown className="text-gray-600 w-6 h-6 mr-3" />
+              <h3 className="text-xl font-bold text-gray-900">ゴールド特典</h3>
             </div>
             
             <div className="space-y-3">
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
-                <p className="text-lg text-text">ポイント1.5倍獲得</p>
+                <div className="w-2 h-2 bg-gray-600 rounded-full mr-3"></div>
+                <p className="text-lg text-gray-900">ポイント1.5倍獲得</p>
               </div>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
-                <p className="text-lg text-text">誕生日ボーナス500pt</p>
+                <div className="w-2 h-2 bg-gray-600 rounded-full mr-3"></div>
+                <p className="text-lg text-gray-900">誕生日ボーナス500pt</p>
               </div>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
-                <p className="text-lg text-text">専用カスタマーサポート</p>
+                <div className="w-2 h-2 bg-gray-600 rounded-full mr-3"></div>
+                <p className="text-lg text-gray-900">専用カスタマーサポート</p>
               </div>
             </div>
           </div>
