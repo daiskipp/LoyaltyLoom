@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Japanese customer loyalty application designed for elderly users, featuring passkey authentication and QR code check-ins. The app allows users to earn points by visiting participating stores, track their visit history, and manage their loyalty status. It emphasizes accessibility with large fonts, simple navigation, and touch-friendly interfaces optimized for senior users.
+This is a Japanese customer loyalty application designed for elderly users, featuring passkey authentication and QR code check-ins. The app allows users to earn points by visiting participating stores, track their visit history, and manage their loyalty status. It emphasizes accessibility with large fonts, simple navigation, and touch-friendly interfaces optimized for senior users. Users can now edit their profile information (name) and test the QR scanning functionality with demo stores.
 
 ## User Preferences
 

@@ -121,6 +121,33 @@ export default function Home() {
     },
   });
 
+  // Initialize demo stores mutation
+  const initDemoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/init-demo", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "初期化完了",
+        description: "デモストアが作成されました。QRスキャンを試してください！",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "未認証",
+          description: "ログアウトされました。再度ログインします...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+    },
+  });
+
   if (isLoading || !userData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -233,9 +260,26 @@ export default function Home() {
             <Card className="card-senior">
               <CardContent className="text-center py-8">
                 <Gift className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-senior text-gray-600">
+                <p className="text-senior text-gray-600 mb-6">
                   まだアクティビティがありません。<br />
                   QRコードをスキャンして最初のポイントを獲得しましょう！
+                </p>
+                <Button
+                  onClick={() => initDemoMutation.mutate()}
+                  disabled={initDemoMutation.isPending}
+                  className="button-senior bg-accent hover:bg-orange-600 text-white mb-4"
+                >
+                  {initDemoMutation.isPending ? (
+                    <>
+                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
+                      初期化中...
+                    </>
+                  ) : (
+                    'デモストア作成'
+                  )}
+                </Button>
+                <p className="text-sm text-gray-500">
+                  テスト用のストアを作成してQRスキャンを体験できます
                 </p>
               </CardContent>
             </Card>

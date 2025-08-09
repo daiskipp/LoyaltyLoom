@@ -9,6 +9,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import History from "@/pages/history";
 import Profile from "@/pages/profile";
+import ProfileEdit from "@/pages/profile-edit";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/history" component={History} />
           <Route path="/profile" component={Profile} />
+          <Route path="/profile/edit" component={ProfileEdit} />
         </>
       )}
       <Route component={NotFound} />

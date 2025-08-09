@@ -139,6 +139,14 @@ export const insertPasskeyCredentialSchema = createInsertSchema(passkeyCredentia
   createdAt: true,
 });
 
+export const updateUserProfileSchema = createInsertSchema(users).pick({
+  firstName: true,
+  lastName: true,
+}).extend({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -150,3 +158,4 @@ export type StoreVisit = typeof storeVisits.$inferSelect;
 export type InsertStoreVisit = z.infer<typeof insertStoreVisitSchema>;
 export type PasskeyCredential = typeof passkeyCredentials.$inferSelect;
 export type InsertPasskeyCredential = z.infer<typeof insertPasskeyCredentialSchema>;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;

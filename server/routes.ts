@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPointTransactionSchema, insertStoreVisitSchema } from "@shared/schema";
+import { insertPointTransactionSchema, insertStoreVisitSchema, updateUserProfileSchema } from "@shared/schema";
 import QRCode from "qrcode";
 import crypto from "crypto";
 
@@ -19,6 +19,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Update user profile
+  app.patch('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const validationResult = updateUserProfileSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid profile data",
+          errors: validationResult.error.errors 
+        });
+      }
+      
+      const updatedUser = await storage.updateUserProfile(userId, validationResult.data);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
@@ -173,6 +195,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching activity:", error);
       res.status(500).json({ message: "Failed to fetch activity" });
+    }
+  });
+
+  // Initialize demo store if none exist
+  app.post('/api/init-demo', isAuthenticated, async (req, res) => {
+    try {
+      const stores = await storage.getStores();
+      if (stores.length === 0) {
+        // Create demo stores
+        const demoStores = [
+          {
+            name: "カフェ・ドリーム",
+            address: "東京都渋谷区1-1-1",
+            qrCode: "test-store-qr-code-123",
+            pointsPerVisit: 50,
+          },
+          {
+            name: "ブックストア本の森",
+            address: "東京都新宿区2-2-2", 
+            qrCode: "bookstore-qr-456",
+            pointsPerVisit: 30,
+          },
+          {
+            name: "レストラン味楽",
+            address: "東京都港区3-3-3",
+            qrCode: "restaurant-qr-789",
+            pointsPerVisit: 100,
+          }
+        ];
+        
+        for (const storeData of demoStores) {
+          await storage.createStore(storeData);
+        }
+        
+        res.json({ message: "Demo stores created successfully", count: demoStores.length });
+      } else {
+        res.json({ message: "Stores already exist", count: stores.length });
+      }
+    } catch (error) {
+      console.error("Error initializing demo stores:", error);
+      res.status(500).json({ message: "Failed to initialize demo stores" });
     }
   });
 

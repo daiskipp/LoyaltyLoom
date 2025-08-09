@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
-import { User, LogOut, ArrowLeft, Crown, Star } from "lucide-react";
+import { User, LogOut, ArrowLeft, Crown, Star, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -117,10 +117,19 @@ export default function Profile() {
               <p className="text-senior text-gray-600 mb-4">{user.email}</p>
             )}
             
-            <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${getRankColor(rank)} border-2`}>
+            <div className={`inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r ${getRankColor(rank)} border-2 mb-4`}>
               {getRankIcon(rank)}
               <span className="ml-2 font-semibold text-text">{rank}ランク</span>
             </div>
+            
+            <Button
+              onClick={() => window.location.href = "/profile/edit"}
+              variant="outline"
+              className="button-senior border-primary text-primary hover:bg-primary hover:text-white"
+            >
+              <Edit className="w-5 h-5 mr-3" />
+              プロフィール編集
+            </Button>
           </CardContent>
         </Card>
 
