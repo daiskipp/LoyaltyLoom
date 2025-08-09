@@ -547,6 +547,54 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(announcements.priority), desc(announcements.createdAt));
   }
 
+  // Notification operations
+  async getUserNotifications(userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(20);
+  }
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          eq(notifications.isRead, false)
+        )
+      );
+    return result[0]?.count || 0;
+  }
+
+  async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ 
+        isRead: true,
+        updatedAt: new Date()
+      })
+      .where(
+        and(
+          eq(notifications.id, notificationId),
+          eq(notifications.userId, userId)
+        )
+      );
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ 
+        isRead: true,
+        updatedAt: new Date()
+      })
+      .where(eq(notifications.userId, userId));
+  }
+
   // Favorite store operations
   async getFavoriteStores(userId: string): Promise<(FavoriteStore & { store: { id: string; name: string; }})[]> {
     const results = await db
