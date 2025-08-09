@@ -28,6 +28,7 @@ import {
   type InsertUserNft,
   announcements,
   favoriteStores,
+  notifications,
   type Announcement,
   type InsertAnnouncement,
   type FavoriteStore,
@@ -548,7 +549,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Notification operations
-  async getUserNotifications(userId: string): Promise<any[]> {
+  async getUserNotifications(userId: string) {
     return await db
       .select()
       .from(notifications)

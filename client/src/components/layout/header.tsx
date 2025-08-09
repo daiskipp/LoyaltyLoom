@@ -1,6 +1,6 @@
-import { Star, Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
 import HamburgerMenu from "./hamburger-menu";
+import NotificationsDropdown from "@/components/ui/notifications-dropdown";
 
 export default function Header() {
   return (
@@ -19,9 +19,7 @@ export default function Header() {
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-            <Bell className="h-5 w-5" />
-          </Button>
+          <NotificationsDropdown />
         </div>
       </div>
     </header>
