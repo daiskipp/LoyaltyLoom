@@ -532,6 +532,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(announcements.priority), desc(announcements.createdAt));
   }
 
+  async getAnnouncementsByStore(storeId: string): Promise<Announcement[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.isActive, true),
+          eq(announcements.storeId, storeId),
+          sql`(${announcements.endDate} IS NULL OR ${announcements.endDate} > ${now})`
+        )
+      )
+      .orderBy(desc(announcements.priority), desc(announcements.createdAt));
+  }
+
   // Favorite store operations
   async getFavoriteStores(userId: string): Promise<(FavoriteStore & { store: { id: string; name: string; }})[]> {
     const results = await db

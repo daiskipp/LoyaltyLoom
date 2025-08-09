@@ -8,6 +8,7 @@ import {
   integer,
   text,
   boolean,
+  numeric,
   unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -51,6 +52,13 @@ export const stores = pgTable("stores", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   address: text("address"),
+  description: text("description"), // 店舗の紹介文
+  imageUrl: varchar("image_url"), // 店舗画像のURL
+  latitude: varchar("latitude"), // 緯度
+  longitude: varchar("longitude"), // 経度
+  phoneNumber: varchar("phone_number"), // 電話番号
+  website: varchar("website"), // ウェブサイトURL
+  businessHours: text("business_hours"), // 営業時間
   qrCode: varchar("qr_code").unique().notNull(),
   experiencePerVisit: integer("experience_per_visit").default(25),
   loyaltyPerVisit: integer("loyalty_per_visit").default(50),

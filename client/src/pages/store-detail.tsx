@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
-import { ArrowLeft, Store, QrCode, Heart, HeartOff, MapPin, Award } from "lucide-react";
+import { ArrowLeft, Store, QrCode, Heart, HeartOff, MapPin, Award, Phone, Globe, Clock, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,13 @@ interface Store {
   id: string;
   name: string;
   address: string;
+  description?: string;
+  imageUrl?: string;
+  latitude?: string;
+  longitude?: string;
+  phoneNumber?: string;
+  website?: string;
+  businessHours?: string;
   storeType: string;
   experiencePerVisit: number;
   loyaltyPerVisit: number;
@@ -54,6 +61,19 @@ export default function StoreDetail() {
   // Fetch store data
   const { data: store, isLoading: storeLoading } = useQuery<Store>({
     queryKey: ["/api/stores", storeId],
+    enabled: !!user && !!storeId,
+  });
+
+  // Fetch store-specific announcements
+  const { data: storeAnnouncements = [] } = useQuery({
+    queryKey: ["/api/announcements", "store", storeId],
+    queryFn: async () => {
+      const response = await fetch(`/api/announcements?storeId=${storeId}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch announcements');
+      return response.json();
+    },
     enabled: !!user && !!storeId,
   });
 
@@ -271,6 +291,17 @@ export default function StoreDetail() {
           <h1 className="text-2xl font-bold text-gray-900">店舗詳細</h1>
         </div>
 
+        {/* Store Image */}
+        {store.imageUrl && (
+          <div className="mb-6 rounded-lg overflow-hidden">
+            <img 
+              src={store.imageUrl} 
+              alt={store.name}
+              className="w-full h-48 object-cover"
+            />
+          </div>
+        )}
+
         {/* Store Information Card */}
         <Card className={`mb-6 transition-all duration-200 ${
           isStoreFavorited ? 'border-pink-200 bg-pink-50' : 'border-gray-200 bg-white'
@@ -312,13 +343,77 @@ export default function StoreDetail() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Description */}
+              {store.description && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">店舗について</h3>
+                  <p className="text-gray-600 leading-relaxed">{store.description}</p>
+                </div>
+              )}
+
               {/* Address */}
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-gray-500 mt-0.5" />
-                <div>
+                <div className="flex-1">
                   <p className="font-medium text-gray-900">住所</p>
                   <p className="text-gray-600">{store.address}</p>
+                  {store.latitude && store.longitude && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => {
+                        const googleMapsUrl = `https://www.google.com/maps?q=${store.latitude},${store.longitude}`;
+                        window.open(googleMapsUrl, '_blank');
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      地図で見る
+                    </Button>
+                  )}
                 </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="grid grid-cols-1 gap-3">
+                {store.phoneNumber && (
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-5 h-5 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-900">電話番号</p>
+                      <a href={`tel:${store.phoneNumber}`} className="text-blue-600 hover:underline">
+                        {store.phoneNumber}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {store.website && (
+                  <div className="flex items-center space-x-3">
+                    <Globe className="w-5 h-5 text-gray-500" />
+                    <div>
+                      <p className="font-medium text-gray-900">ウェブサイト</p>
+                      <a 
+                        href={store.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        公式サイトを見る
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {store.businessHours && (
+                  <div className="flex items-start space-x-3">
+                    <Clock className="w-5 h-5 text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-gray-900">営業時間</p>
+                      <p className="text-gray-600 whitespace-pre-line">{store.businessHours}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Rewards Section */}
@@ -359,6 +454,49 @@ export default function StoreDetail() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Store Announcements */}
+        {storeAnnouncements.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-gray-900">
+                店舗からのお知らせ
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {storeAnnouncements.map((announcement: any) => {
+                  const getAnnouncementStyle = (type: string) => {
+                    switch (type) {
+                      case 'promotion':
+                        return 'border-l-4 border-l-green-500 bg-green-50';
+                      case 'urgent':
+                        return 'border-l-4 border-l-red-500 bg-red-50';
+                      case 'event':
+                        return 'border-l-4 border-l-purple-500 bg-purple-50';
+                      default:
+                        return 'border-l-4 border-l-blue-500 bg-blue-50';
+                    }
+                  };
+
+                  return (
+                    <div key={announcement.id} className={`p-4 rounded-lg ${getAnnouncementStyle(announcement.type)}`}>
+                      <h4 className="font-semibold text-gray-900 mb-1">{announcement.title}</h4>
+                      <p className="text-gray-700 text-sm">{announcement.content}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(announcement.createdAt).toLocaleDateString('ja-JP', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       <BottomNav />
