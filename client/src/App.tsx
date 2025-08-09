@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import History from "@/pages/history";
 import Profile from "@/pages/profile";
 import ProfileEdit from "@/pages/profile-edit";
+import DemoStores from "@/pages/demo-stores";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/profile" component={Profile} />
           <Route path="/profile/edit" component={ProfileEdit} />
+          <Route path="/demo-stores" component={DemoStores} />
         </>
       )}
       <Route component={NotFound} />

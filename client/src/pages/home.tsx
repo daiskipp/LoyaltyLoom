@@ -264,21 +264,30 @@ export default function Home() {
                   まだアクティビティがありません。<br />
                   QRコードをスキャンして最初のポイントを獲得しましょう！
                 </p>
-                <Button
-                  onClick={() => initDemoMutation.mutate()}
-                  disabled={initDemoMutation.isPending}
-                  className="button-senior bg-accent hover:bg-orange-600 text-white mb-4"
-                >
-                  {initDemoMutation.isPending ? (
-                    <>
-                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
-                      初期化中...
-                    </>
-                  ) : (
-                    'デモストア作成'
-                  )}
-                </Button>
-                <p className="text-sm text-gray-500">
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => initDemoMutation.mutate()}
+                    disabled={initDemoMutation.isPending}
+                    className="w-full button-senior bg-accent hover:bg-orange-600 text-white"
+                  >
+                    {initDemoMutation.isPending ? (
+                      <>
+                        <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
+                        初期化中...
+                      </>
+                    ) : (
+                      'デモストア作成'
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => window.location.href = "/demo-stores"}
+                    variant="outline"
+                    className="w-full button-senior border-primary text-primary hover:bg-primary hover:text-white"
+                  >
+                    デモストア一覧
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-500 mt-4">
                   テスト用のストアを作成してQRスキャンを体験できます
                 </p>
               </CardContent>

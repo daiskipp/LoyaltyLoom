@@ -239,6 +239,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all stores
+  app.get("/api/stores", isAuthenticated, async (req: any, res) => {
+    try {
+      const stores = await storage.getStores();
+      res.json(stores);
+    } catch (error) {
+      console.error("Error fetching stores:", error);
+      res.status(500).json({ message: "Failed to fetch stores" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
