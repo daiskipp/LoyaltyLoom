@@ -338,6 +338,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const transaction = await storage.transferCoins(fromUserId, toUserId, amount, message);
+      
+      // Auto-add to address book if not exists
+      try {
+        const existingEntry = await storage.findAddressBookEntry(fromUserId, toUserId);
+        if (!existingEntry) {
+          const recipientUser = await storage.getUser(toUserId);
+          if (recipientUser) {
+            const nickname = recipientUser.firstName || recipientUser.email || toUserId;
+            await storage.addToAddressBook({
+              userId: fromUserId,
+              recipientUserId: toUserId,
+              nickname,
+              isFavorite: false,
+            });
+          }
+        }
+      } catch (addressBookError) {
+        // Don't fail the transfer if address book update fails
+        console.log("Failed to auto-add to address book:", addressBookError);
+      }
+      
       res.json({
         success: true,
         transaction,
@@ -357,6 +378,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching coin balance:", error);
       res.status(500).json({ message: "Failed to fetch coin balance" });
+    }
+  });
+
+  // Address book routes
+  app.get("/api/address-book", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const addressBook = await storage.getAddressBook(userId);
+      res.json(addressBook);
+    } catch (error) {
+      console.error("Error fetching address book:", error);
+      res.status(500).json({ message: "Failed to fetch address book" });
+    }
+  });
+
+  app.post("/api/address-book", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { recipientUserId, nickname, isFavorite } = req.body;
+
+      if (!recipientUserId || !nickname) {
+        return res.status(400).json({ message: "Recipient ID and nickname are required" });
+      }
+
+      const entry = await storage.addToAddressBook({
+        userId,
+        recipientUserId,
+        nickname,
+        isFavorite: isFavorite || false,
+      });
+
+      res.json({
+        success: true,
+        entry,
+        message: "アドレス帳に追加しました",
+      });
+    } catch (error) {
+      console.error("Error adding to address book:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.put("/api/address-book/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { nickname, isFavorite } = req.body;
+
+      const entry = await storage.updateAddressBookEntry(id, {
+        nickname,
+        isFavorite,
+      });
+
+      res.json({
+        success: true,
+        entry,
+        message: "アドレス帳を更新しました",
+      });
+    } catch (error) {
+      console.error("Error updating address book entry:", error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/address-book/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.removeFromAddressBook(id);
+      res.json({
+        success: true,
+        message: "アドレス帳から削除しました",
+      });
+    } catch (error) {
+      console.error("Error removing from address book:", error);
+      res.status(400).json({ message: error.message });
     }
   });
 

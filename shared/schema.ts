@@ -101,6 +101,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   passkeyCredentials: many(passkeyCredentials),
   sentCoinTransactions: many(coinTransactions, { relationName: "sentTransactions" }),
   receivedCoinTransactions: many(coinTransactions, { relationName: "receivedTransactions" }),
+  addressBookEntries: many(addressBook, { relationName: "addressBookEntries" }),
 }));
 
 export const storesRelations = relations(stores, ({ many }) => ({
@@ -178,6 +179,17 @@ export const coinTransactions = pgTable("coin_transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Address book for coin transfers
+export const addressBook = pgTable("address_book", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  recipientUserId: varchar("recipient_user_id").notNull().references(() => users.id),
+  nickname: varchar("nickname", { length: 100 }).notNull(),
+  isFavorite: boolean("is_favorite").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const coinTransactionsRelations = relations(coinTransactions, ({ one }) => ({
   fromUser: one(users, {
     fields: [coinTransactions.fromUserId],
@@ -191,10 +203,25 @@ export const coinTransactionsRelations = relations(coinTransactions, ({ one }) =
   }),
 }));
 
+export const addressBookRelations = relations(addressBook, ({ one }) => ({
+  user: one(users, {
+    fields: [addressBook.userId],
+    references: [users.id],
+    relationName: "addressBookEntries",
+  }),
+  recipient: one(users, {
+    fields: [addressBook.recipientUserId],
+    references: [users.id],
+    relationName: "addressBookRecipient",
+  }),
+}));
+
 
 
 export type CoinTransaction = typeof coinTransactions.$inferSelect;
 export type InsertCoinTransaction = typeof coinTransactions.$inferInsert;
+export type AddressBookEntry = typeof addressBook.$inferSelect;
+export type InsertAddressBookEntry = typeof addressBook.$inferInsert;
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Store = typeof stores.$inferSelect;

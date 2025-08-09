@@ -5,6 +5,7 @@ import {
   storeVisits,
   passkeyCredentials,
   coinTransactions,
+  addressBook,
   type User,
   type UpsertUser,
   type Store,
@@ -17,6 +18,8 @@ import {
   type InsertPasskeyCredential,
   type CoinTransaction,
   type InsertCoinTransaction,
+  type AddressBookEntry,
+  type InsertAddressBookEntry,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
@@ -58,6 +61,13 @@ export interface IStorage {
   createCoinTransaction(transaction: InsertCoinTransaction): Promise<CoinTransaction>;
   transferCoins(fromUserId: string, toUserId: string, amount: number, message?: string): Promise<CoinTransaction>;
   getCoinBalance(userId: string): Promise<number>;
+  
+  // Address book operations
+  getAddressBook(userId: string): Promise<AddressBookEntry[]>;
+  addToAddressBook(entry: InsertAddressBookEntry): Promise<AddressBookEntry>;
+  updateAddressBookEntry(id: string, updates: Partial<InsertAddressBookEntry>): Promise<AddressBookEntry>;
+  removeFromAddressBook(id: string): Promise<void>;
+  findAddressBookEntry(userId: string, recipientId: string): Promise<AddressBookEntry | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -279,6 +289,60 @@ export class DatabaseStorage implements IStorage {
   async getCoinBalance(userId: string): Promise<number> {
     const user = await this.getUser(userId);
     return user?.coins || 0;
+  }
+
+  // Address book operations
+  async getAddressBook(userId: string): Promise<AddressBookEntry[]> {
+    return await db
+      .select()
+      .from(addressBook)
+      .where(eq(addressBook.userId, userId))
+      .orderBy(desc(addressBook.isFavorite), desc(addressBook.createdAt));
+  }
+
+  async addToAddressBook(entryData: InsertAddressBookEntry): Promise<AddressBookEntry> {
+    // Check if entry already exists
+    const existing = await this.findAddressBookEntry(entryData.userId!, entryData.recipientUserId!);
+    if (existing) {
+      throw new Error('このユーザーは既にアドレス帳に登録されています');
+    }
+
+    const [entry] = await db
+      .insert(addressBook)
+      .values(entryData)
+      .returning();
+    return entry;
+  }
+
+  async updateAddressBookEntry(id: string, updates: Partial<InsertAddressBookEntry>): Promise<AddressBookEntry> {
+    const [entry] = await db
+      .update(addressBook)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(addressBook.id, id))
+      .returning();
+    return entry;
+  }
+
+  async removeFromAddressBook(id: string): Promise<void> {
+    await db
+      .delete(addressBook)
+      .where(eq(addressBook.id, id));
+  }
+
+  async findAddressBookEntry(userId: string, recipientId: string): Promise<AddressBookEntry | undefined> {
+    const [entry] = await db
+      .select()
+      .from(addressBook)
+      .where(
+        and(
+          eq(addressBook.userId, userId),
+          eq(addressBook.recipientUserId, recipientId)
+        )
+      );
+    return entry;
   }
 }
 

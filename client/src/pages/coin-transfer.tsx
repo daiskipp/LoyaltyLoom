@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, Send, History, ArrowLeft, User } from "lucide-react";
+import { Coins, Send, History, ArrowLeft, User, Book, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,13 +24,54 @@ interface CoinTransaction {
   createdAt: string;
 }
 
+interface AddressBookEntry {
+  id: string;
+  userId: string;
+  recipientUserId: string;
+  nickname: string;
+  isFavorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function CoinTransfer() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"send" | "history">("send");
+  const [activeTab, setActiveTab] = useState<"send" | "history" | "addressbook">("send");
   const [toUserId, setToUserId] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
+
+  // Mutation for updating address book entry
+  const updateAddressBookMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<AddressBookEntry> }) => {
+      const response = await fetch(`/api/address-book/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/address-book"] });
+      toast({
+        title: "成功",
+        description: data.message,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "エラー",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Fetch coin balance
   const { data: balance = 0 } = useQuery<{ balance: number }>({
@@ -42,6 +83,12 @@ export default function CoinTransfer() {
   const { data: transactions = [] } = useQuery<CoinTransaction[]>({
     queryKey: ["/api/coins/transactions"],
     enabled: activeTab === "history",
+  });
+
+  // Fetch address book
+  const { data: addressBook = [] } = useQuery<AddressBookEntry[]>({
+    queryKey: ["/api/address-book"],
+    enabled: activeTab === "addressbook" || activeTab === "send",
   });
 
   const transferMutation = useMutation({
@@ -148,46 +195,81 @@ export default function CoinTransfer() {
         </Card>
 
         {/* Tab Navigation */}
-        <div className="flex mb-6">
+        <div className="grid grid-cols-3 gap-2 mb-6">
           <Button
             variant={activeTab === "send" ? "default" : "outline"}
             onClick={() => setActiveTab("send")}
-            className="flex-1 mr-2 button-senior"
+            className="button-senior text-sm"
           >
-            <Send className="w-5 h-5 mr-2" />
+            <Send className="w-4 h-4 mr-1" />
             送金
+          </Button>
+          <Button
+            variant={activeTab === "addressbook" ? "default" : "outline"}
+            onClick={() => setActiveTab("addressbook")}
+            className="button-senior text-sm"
+          >
+            <Book className="w-4 h-4 mr-1" />
+            アドレス帳
           </Button>
           <Button
             variant={activeTab === "history" ? "default" : "outline"}
             onClick={() => setActiveTab("history")}
-            className="flex-1 ml-2 button-senior"
+            className="button-senior text-sm"
           >
-            <History className="w-5 h-5 mr-2" />
+            <History className="w-4 h-4 mr-1" />
             履歴
           </Button>
         </div>
 
         {activeTab === "send" ? (
-          <Card className="card-senior">
-            <CardHeader>
-              <CardTitle className="text-xl text-text">コイン送金</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="toUserId" className="text-lg text-text">
-                    送信先ユーザーID
-                  </Label>
-                  <Input
-                    id="toUserId"
-                    type="text"
-                    value={toUserId}
-                    onChange={(e) => setToUserId(e.target.value)}
-                    placeholder="ユーザーIDを入力"
-                    className="input-senior"
-                    required
-                  />
-                </div>
+          <div className="space-y-6">
+            {/* Quick Send - Address Book */}
+            {addressBook.length > 0 && (
+              <Card className="card-senior">
+                <CardHeader>
+                  <CardTitle className="text-lg text-text">よく送る相手</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {addressBook.filter(entry => entry.isFavorite).slice(0, 3).map((entry) => (
+                      <Button
+                        key={entry.id}
+                        onClick={() => setToUserId(entry.recipientUserId)}
+                        variant="outline"
+                        className="w-full flex items-center justify-start p-4 h-auto"
+                      >
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                          <Star className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <span className="text-lg">{entry.nickname}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="card-senior">
+              <CardHeader>
+                <CardTitle className="text-xl text-text">コイン送金</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="toUserId" className="text-lg text-text">
+                      送信先ユーザーID
+                    </Label>
+                    <Input
+                      id="toUserId"
+                      type="text"
+                      value={toUserId}
+                      onChange={(e) => setToUserId(e.target.value)}
+                      placeholder="ユーザーIDを入力"
+                      className="input-senior"
+                      required
+                    />
+                  </div>
 
                 <div className="space-y-3">
                   <Label htmlFor="amount" className="text-lg text-text">
@@ -238,9 +320,78 @@ export default function CoinTransfer() {
                     </>
                   )}
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        ) : activeTab === "addressbook" ? (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-text mb-4">アドレス帳</h2>
+            {addressBook.length === 0 ? (
+              <Card className="card-senior">
+                <CardContent className="text-center py-8">
+                  <Book className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-lg text-gray-600">アドレス帳が空です</p>
+                  <p className="text-sm text-gray-500 mt-2">送金すると自動的に追加されます</p>
+                </CardContent>
+              </Card>
+            ) : (
+              addressBook.map((entry) => (
+                <Card key={entry.id} className="card-senior">
+                  <CardContent className="flex items-center justify-between py-4">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        entry.isFavorite ? 'bg-yellow-100' : 'bg-gray-100'
+                      }`}>
+                        {entry.isFavorite ? (
+                          <Star className="w-6 h-6 text-yellow-600" />
+                        ) : (
+                          <User className="w-6 h-6 text-gray-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-text">
+                          {entry.nickname}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {entry.recipientUserId}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => {
+                          updateAddressBookMutation.mutate({
+                            id: entry.id,
+                            updates: { isFavorite: !entry.isFavorite }
+                          });
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="p-2"
+                      >
+                        {entry.isFavorite ? (
+                          <Heart className="w-5 h-5 text-red-500 fill-current" />
+                        ) : (
+                          <Heart className="w-5 h-5 text-gray-400" />
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setToUserId(entry.recipientUserId);
+                          setActiveTab("send");
+                        }}
+                        size="sm"
+                        className="bg-primary hover:bg-blue-600 text-white"
+                      >
+                        送金
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         ) : (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-text mb-4">送金履歴</h2>
