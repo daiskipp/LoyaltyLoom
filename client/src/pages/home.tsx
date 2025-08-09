@@ -256,66 +256,7 @@ export default function Home() {
       <Header />
       
       <main className="max-w-md mx-auto px-6 pb-24">
-        {/* Announcements Section */}
-        {announcements.length > 0 && (
-          <div className="space-y-4 mb-6 mt-6">
-            <h2 className="text-xl font-bold text-gray-900">お知らせ</h2>
-            <div className="space-y-3">
-              {announcements.map((announcement) => (
-                <div
-                  key={announcement.id}
-                  className={`
-                    p-4 rounded-lg border-l-4 bg-white shadow-sm
-                    ${announcement.type === "urgent" ? "border-red-500 bg-red-50" : 
-                      announcement.type === "promotion" ? "border-blue-500 bg-blue-50" :
-                      announcement.type === "event" ? "border-green-500 bg-green-50" :
-                      "border-gray-500 bg-gray-50"}
-                  `}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-2">
-                        {announcement.title}
-                      </h3>
-                      <p className="text-gray-700 leading-relaxed mb-2">
-                        {announcement.content}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <span>
-                          {new Date(announcement.createdAt).toLocaleDateString('ja-JP', {
-                            year: 'numeric',
-                            month: 'numeric',
-                            day: 'numeric',
-                          })}
-                        </span>
-                        {announcement.endDate && (
-                          <span className="ml-4">
-                            期限: {new Date(announcement.endDate).toLocaleDateString('ja-JP', {
-                              year: 'numeric',
-                              month: 'numeric',
-                              day: 'numeric',
-                            })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className={`
-                      px-3 py-1 rounded-full text-xs font-medium ml-4
-                      ${announcement.type === "urgent" ? "bg-red-100 text-red-800" :
-                        announcement.type === "promotion" ? "bg-blue-100 text-blue-800" :
-                        announcement.type === "event" ? "bg-green-100 text-green-800" :
-                        "bg-gray-100 text-gray-800"}
-                    `}>
-                      {announcement.type === "urgent" ? "緊急" :
-                       announcement.type === "promotion" ? "キャンペーン" :
-                       announcement.type === "event" ? "イベント" : "お知らせ"}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* RPG-Style Stats Cards */}
         <div className="space-y-4 mb-6 mt-6">
@@ -620,6 +561,25 @@ export default function Home() {
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-gray-600 rounded-full mr-3"></div>
                 <p className="text-lg text-gray-900">専用カスタマーサポート</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Simple News Ticker - Compact Announcements */}
+        {announcements.length > 0 && (
+          <div className="bg-gray-50 border-t border-gray-200 mt-8 py-3">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <span className="text-xs font-medium bg-gray-200 px-2 py-1 rounded">お知らせ</span>
+              <div className="flex-1 overflow-hidden">
+                <div className="animate-pulse">
+                  {announcements.slice(0, 2).map((announcement, index) => (
+                    <span key={announcement.id} className="mr-6">
+                      {index > 0 && "・ "}
+                      {announcement.title}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
