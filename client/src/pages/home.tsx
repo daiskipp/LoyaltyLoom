@@ -223,33 +223,76 @@ export default function Home() {
       <main className="max-w-md mx-auto px-6 pb-24">
         {/* RPG-Style Stats Cards */}
         <div className="space-y-4 mb-6 mt-6">
-          {/* Level and Experience Card */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-lg text-white">
-            <div className="flex items-center justify-between mb-4">
+          {/* Membership Card */}
+          <div className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-black rounded-2xl p-6 shadow-2xl text-white overflow-hidden">
+            {/* Card Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-4 right-4 w-20 h-20 border-2 border-white rounded-full"></div>
+              <div className="absolute bottom-4 left-4 w-16 h-16 border-2 border-white rounded-full"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-white rounded-full"></div>
+            </div>
+            
+            {/* Card Header */}
+            <div className="relative z-10 flex items-center justify-between mb-6">
               <div>
-                <p className="text-lg opacity-90 mb-1">レベル</p>
-                <p className="text-3xl font-bold">{level}</p>
+                <h3 className="text-xs font-semibold tracking-widest uppercase opacity-80 mb-1">MEMBER CARD</h3>
+                <h2 className="text-lg font-bold">ロイヤルティ会員証</h2>
               </div>
-              <div className="text-right">
-                <p className="text-sm opacity-90">経験値</p>
-                <p className="text-xl font-bold">{experiencePoints.toLocaleString()}</p>
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                <Crown className="w-6 h-6 text-yellow-900" />
               </div>
             </div>
             
-            {xpNeededForNextLevel > 0 && (
-              <div className="bg-white bg-opacity-20 rounded-xl p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm">次のレベルまで</span>
-                  <span className="text-sm font-semibold">{xpNeededForNextLevel} XP</span>
+            {/* Member Info */}
+            <div className="relative z-10 mb-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-2xl font-bold">
+                  {userData.nickname ? userData.nickname.charAt(0).toUpperCase() : 'G'}
                 </div>
-                <div className="w-full bg-white bg-opacity-30 rounded-full h-2">
+                <div>
+                  <h3 className="text-lg font-bold">{userData.nickname || 'ゲスト'}</h3>
+                  <p className="text-sm opacity-80">{userData.userId ? `@${userData.userId}` : 'ID未設定'}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="relative z-10 grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-yellow-400">{level}</p>
+                <p className="text-xs uppercase tracking-wide opacity-80">レベル</p>
+              </div>
+              <div className="text-center border-x border-white border-opacity-20">
+                <p className="text-lg font-bold text-blue-400">{loyaltyPoints.toLocaleString()}</p>
+                <p className="text-xs uppercase tracking-wide opacity-80">ポイント</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-purple-400">{rank}</p>
+                <p className="text-xs uppercase tracking-wide opacity-80">ランク</p>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            {xpNeededForNextLevel > 0 && (
+              <div className="relative z-10 bg-white bg-opacity-10 rounded-full p-1">
+                <div className="flex justify-between items-center mb-1 px-2">
+                  <span className="text-xs">次のレベルまで</span>
+                  <span className="text-xs font-semibold">{xpNeededForNextLevel} XP</span>
+                </div>
+                <div className="w-full bg-black bg-opacity-30 rounded-full h-2">
                   <div 
-                    className="bg-yellow-400 h-2 rounded-full transition-all duration-500" 
+                    className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-2 rounded-full transition-all duration-500" 
                     style={{ width: `${levelProgressPercentage}%` }}
                   ></div>
                 </div>
               </div>
             )}
+            
+            {/* Card Number */}
+            <div className="relative z-10 mt-4 pt-4 border-t border-white border-opacity-20">
+              <p className="text-xs opacity-60 tracking-widest">CARD NO.</p>
+              <p className="text-sm font-mono">**** **** **** {userData.id?.slice(-4) || '0000'}</p>
+            </div>
           </div>
 
           {/* Currency Grid */}
