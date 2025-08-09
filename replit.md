@@ -73,3 +73,15 @@ Preferred communication style: Simple, everyday language.
 - **TypeScript**: Type safety across frontend and backend
 - **Tailwind CSS**: Utility-first styling framework
 - **Drizzle Kit**: Database migration and schema management tool
+
+## Recent Changes
+
+### 2025-08-09: Address Book Feature Complete
+- ✅ Added address book functionality for coin transfers
+- ✅ Automatic saving of transfer recipients with user-friendly nicknames
+- ✅ Favorite contacts system with heart icon toggle
+- ✅ Quick send feature showing favorite contacts on send page
+- ✅ Full CRUD operations for address book management
+- ✅ Database migrations generated for address_book table
+- ✅ Comprehensive README.md documentation created
+- ✅ Tab-based navigation: Send | Address Book | History
